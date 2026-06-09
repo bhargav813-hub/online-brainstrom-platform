@@ -18,3 +18,7 @@ export const updateSessionSchema = z.object({
   description: z.string().max(2000).optional(),
   status: z.enum(['active', 'paused', 'ended']).optional(),
 });
+
+export const inviteToSessionSchema = z.object({
+  email: z.string().email('Please provide a valid email address'),
+});

@@ -41,6 +41,15 @@ export class SessionController {
     ApiResponse.success(res, null, 'Left session');
   });
 
+  static invite = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const participant = await SessionService.invite(
+      req.params.sessionId,
+      req.body.email,
+      req.user!.id
+    );
+    ApiResponse.success(res, participant, 'User added to session');
+  });
+
   static getAnalytics = asyncHandler(async (req: Request, res: Response) => {
     const analytics = await SessionService.getAnalytics(req.params.sessionId);
     ApiResponse.success(res, analytics);

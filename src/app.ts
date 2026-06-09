@@ -80,6 +80,28 @@ app.get('/api-docs.json', (_req, res) => {
   res.send(swaggerSpec);
 });
 
+// ==================== API INDEX ====================
+app.get('/api', (_req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Brainstorm Platform API',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      users: '/api/users',
+      workspaces: '/api/workspaces',
+      boards: '/api/boards',
+      sessions: '/api/sessions',
+      ideas: '/api/ideas',
+      votes: '/api/votes',
+      clusters: '/api/clusters',
+      activity: '/api/activity',
+    },
+    docs: '/api-docs',
+  });
+});
+
 // ==================== API ROUTES ====================
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);

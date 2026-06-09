@@ -95,7 +95,29 @@ export class VoteService {
         .select('title upvoteCount downvoteCount'),
     ]);
 
-    return { totalVotes, votesByType, topIdeas };
+    const upvotesCount = votesByType.find((v: any) => v._id === VoteType.UPVOTE)?.count || 0;
+    const downvotesCount = votesByType.find((v: any) => v._id === VoteType.DOWNVOTE)?.count || 0;
+
+    const formattedTopIdeas = topIdeas.map((idea: any) => ({
+      idea,
+      upvotes: idea.upvoteCount,
+      downvotes: idea.downvoteCount,
+      totalVotes: idea.upvoteCount + idea.downvoteCount,
+    }));
+
+    return {
+      totalVotes,
+      votesByType: {
+        upvotes: upvotesCount,
+        downvotes: downvotesCount,
+      },
+      topIdeas: formattedTopIdeas,
+    };
+  }
+
+  /** Get all votes cast by a specific user in a session. */
+  static async getUserVotesInSession(sessionId: string, userId: string) {
+    return Vote.find({ session: sessionId, user: userId });
   }
 
   /** Get votes for a specific idea. */

@@ -4,6 +4,8 @@ import { ActivityLog } from '../activity/activity.model';
 import { ApiError } from '../../utils/apiError';
 import { SessionStatus, ActivityAction } from '../../types';
 import { PaginationOptions, getPaginationMeta } from '../../utils/pagination';
+import { User } from '../users/user.model';
+import { Workspace } from '../workspaces/workspace.model';
 
 /**
  * Session Service — brainstorming session lifecycle management.
@@ -185,6 +187,73 @@ export class SessionService {
     });
 
     return participant;
+  }
+
+  /** Invite a user to a session by email — adds them as an active participant. */
+  static async invite(sessionId: string, email: string, inviterUserId: string) {
+    // Verify session exists and is not ended
+    const session = await Session.findById(sessionId);
+    if (!session) throw ApiError.notFound('Session not found');
+    if (session.status === SessionStatus.ENDED) {
+      throw ApiError.badRequest('Cannot invite to an ended session');
+    }
+
+    // Find the user by email
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) throw ApiError.notFound('No user found with that email address');
+
+    // Verify the user is a member of the session's workspace
+    const workspace = await Workspace.findOne({
+      _id: session.workspace,
+      'members.user': user._id,
+    });
+    if (!workspace) {
+      throw ApiError.badRequest('User is not a member of this workspace. Add them to the workspace first.');
+    }
+
+    // Check max participants limit
+    if (session.maxParticipants) {
+      const activeCount = await SessionParticipant.countDocuments({
+        session: sessionId,
+        isActive: true,
+      });
+      if (activeCount >= session.maxParticipants) {
+        throw ApiError.badRequest('Session has reached its maximum number of participants');
+      }
+    }
+
+    // Upsert participant record
+    let participant = await SessionParticipant.findOne({
+      session: sessionId,
+      user: user._id,
+    });
+
+    if (participant) {
+      if (participant.isActive) {
+        throw ApiError.conflict('User is already an active participant in this session');
+      }
+      participant.isActive = true;
+      participant.joinedAt = new Date();
+      participant.leftAt = undefined;
+      await participant.save();
+    } else {
+      participant = await SessionParticipant.create({
+        session: sessionId,
+        user: user._id,
+        isActive: true,
+      });
+    }
+
+    await ActivityLog.create({
+      session: sessionId,
+      user: inviterUserId,
+      action: ActivityAction.USER_JOINED,
+      targetType: 'Session',
+      targetId: sessionId,
+      metadata: { invitedUser: user._id.toString(), invitedEmail: email },
+    });
+
+    return participant.populate('user', 'name email avatar');
   }
 
   /** Get session analytics — participant count, idea count, vote count. */

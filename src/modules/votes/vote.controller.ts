@@ -24,4 +24,9 @@ export class VoteController {
     const votes = await VoteService.getVotesForIdea(req.params.ideaId);
     ApiResponse.success(res, votes);
   });
+
+  static getMyVotes = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const votes = await VoteService.getUserVotesInSession(req.params.sessionId, req.user!.id);
+    ApiResponse.success(res, votes);
+  });
 }
