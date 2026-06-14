@@ -51,6 +51,30 @@ const options: swaggerJsdoc.Options = {
           required: ['refreshToken'],
           properties: { refreshToken: { type: 'string' } },
         },
+        VerifyOtpInput: {
+          type: 'object',
+          required: ['email', 'otp'],
+          properties: {
+            email: { type: 'string', format: 'email' },
+            otp: { type: 'string', minLength: 6, maxLength: 6 },
+          },
+        },
+        ForgotPasswordInput: {
+          type: 'object',
+          required: ['email'],
+          properties: {
+            email: { type: 'string', format: 'email' },
+          },
+        },
+        ResetPasswordInput: {
+          type: 'object',
+          required: ['email', 'otp', 'password'],
+          properties: {
+            email: { type: 'string', format: 'email' },
+            otp: { type: 'string', minLength: 6, maxLength: 6 },
+            password: { type: 'string', minLength: 6, maxLength: 128 },
+          },
+        },
         AuthResponse: {
           type: 'object',
           properties: {
@@ -206,16 +230,37 @@ const options: swaggerJsdoc.Options = {
       // ════════════ AUTH ════════════
       '/api/auth/register': {
         post: {
-          tags: ['Auth'], summary: 'Register a new user', security: [],
+          tags: ['Auth'], summary: 'Register a new user (sends verification OTP)', security: [],
           requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/RegisterInput' } } } },
-          responses: { '201': { description: 'User registered', content: { 'application/json': { schema: { $ref: '#/components/schemas/AuthResponse' } } } }, '400': { description: 'Validation error' }, '409': { description: 'Email already exists' } },
+          responses: { '201': { description: 'Verification OTP sent to email' }, '400': { description: 'Validation error' }, '409': { description: 'Email already exists and is verified' } },
+        },
+      },
+      '/api/auth/verify-otp': {
+        post: {
+          tags: ['Auth'], summary: 'Verify email using registration OTP', security: [],
+          requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/VerifyOtpInput' } } } },
+          responses: { '200': { description: 'Email verified successfully and tokens issued', content: { 'application/json': { schema: { $ref: '#/components/schemas/AuthResponse' } } } }, '400': { description: 'Invalid or expired OTP' } },
         },
       },
       '/api/auth/login': {
         post: {
-          tags: ['Auth'], summary: 'Login', security: [],
+          tags: ['Auth'], summary: 'Login (requires verified email)', security: [],
           requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/LoginInput' } } } },
-          responses: { '200': { description: 'Login successful', content: { 'application/json': { schema: { $ref: '#/components/schemas/AuthResponse' } } } }, '401': { description: 'Invalid credentials' } },
+          responses: { '200': { description: 'Login successful', content: { 'application/json': { schema: { $ref: '#/components/schemas/AuthResponse' } } } }, '401': { description: 'Invalid credentials or unverified email' } },
+        },
+      },
+      '/api/auth/forgot-password': {
+        post: {
+          tags: ['Auth'], summary: 'Request password reset OTP', security: [],
+          requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ForgotPasswordInput' } } } },
+          responses: { '200': { description: 'Reset OTP sent' }, '404': { description: 'User not found' } },
+        },
+      },
+      '/api/auth/reset-password': {
+        post: {
+          tags: ['Auth'], summary: 'Reset password using OTP', security: [],
+          requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ResetPasswordInput' } } } },
+          responses: { '200': { description: 'Password reset successful' }, '400': { description: 'Invalid or expired OTP' } },
         },
       },
       '/api/auth/refresh-token': {

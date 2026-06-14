@@ -3,6 +3,7 @@ import { User, IUser } from '../users/user.model';
 import { env } from '../../config/env';
 import { ApiError } from '../../utils/apiError';
 import { TokenPayload, UserRole } from '../../types';
+import { sendEmail } from '../../utils/email';
 
 /**
  * Authentication Service
@@ -12,45 +13,63 @@ import { TokenPayload, UserRole } from '../../types';
 export class AuthService {
   /**
    * Register a new user.
-   * Returns user data and tokens.
+   * Generates and emails a 6-digit verification OTP.
    */
   static async register(data: { name: string; email: string; password: string }) {
     // Check if email already exists
     const existingUser = await User.findOne({ email: data.email });
+    
     if (existingUser) {
-      throw ApiError.conflict('Email already registered');
+      if (existingUser.isVerified) {
+        throw ApiError.conflict('Email already registered');
+      }
+
+      // If existing user is unverified, overwrite their registration details
+      existingUser.name = data.name;
+      existingUser.password = data.password; // pre-save hook will hash this
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      existingUser.otp = otp;
+      existingUser.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+      await existingUser.save();
+
+      await sendEmail({
+        to: existingUser.email,
+        subject: 'Email Verification OTP',
+        text: `Your email verification OTP is: ${otp}. It will expire in 10 minutes.`,
+      });
+
+      return {
+        email: existingUser.email,
+        message: 'Verification OTP sent to your email',
+      };
     }
 
-    // Create user (password is hashed in the pre-save hook)
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
     const user = await User.create({
       name: data.name,
       email: data.email,
       password: data.password,
+      isVerified: false,
+      otp,
+      otpExpires: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
     });
 
-    // Generate tokens
-    const tokens = this.generateTokens({
-      id: (user._id as any).toString(),
-      email: user.email,
-      role: UserRole.PARTICIPANT, // Default role
+    await sendEmail({
+      to: user.email,
+      subject: 'Email Verification OTP',
+      text: `Welcome to Brainstorm Platform! Your email verification OTP is: ${otp}. It will expire in 10 minutes.`,
     });
-
-    // Save refresh token
-    await User.findByIdAndUpdate(user._id, { refreshToken: tokens.refreshToken });
 
     return {
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
-      ...tokens,
+      email: user.email,
+      message: 'Verification OTP sent to your email',
     };
   }
 
   /**
    * Login with email and password.
-   * Returns user data and tokens.
+   * Verifies that the user has verified their email address first.
    */
   static async login(data: { email: string; password: string }) {
     // Find user with password field (normally excluded)
@@ -62,6 +81,10 @@ export class AuthService {
 
     if (!user.isActive) {
       throw ApiError.unauthorized('Account has been deactivated');
+    }
+
+    if (!user.isVerified) {
+      throw ApiError.unauthorized('Please verify your email address first');
     }
 
     // Compare password
@@ -88,6 +111,95 @@ export class AuthService {
       },
       ...tokens,
     };
+  }
+
+  /**
+   * Verify registration OTP.
+   * Activates user and issues access/refresh tokens.
+   */
+  static async verifyOtp(data: { email: string; otp: string }) {
+    const user = await User.findOne({ email: data.email }).select('+otp +otpExpires');
+    if (!user) {
+      throw ApiError.notFound('User not found');
+    }
+
+    if (user.isVerified) {
+      throw ApiError.badRequest('User is already verified');
+    }
+
+    if (!user.otp || !user.otpExpires || user.otp !== data.otp || user.otpExpires.getTime() < Date.now()) {
+      throw ApiError.badRequest('Invalid or expired OTP');
+    }
+
+    // Mark as verified and clear OTP fields
+    user.isVerified = true;
+    user.otp = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    // Generate tokens
+    const tokens = this.generateTokens({
+      id: (user._id as any).toString(),
+      email: user.email,
+      role: UserRole.PARTICIPANT,
+    });
+
+    // Save refresh token
+    await User.findByIdAndUpdate(user._id, { refreshToken: tokens.refreshToken });
+
+    return {
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+      ...tokens,
+    };
+  }
+
+  /**
+   * Send a password reset OTP.
+   */
+  static async forgotPassword(email: string) {
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw ApiError.notFound('User with this email not found');
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.otp = otp;
+    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    await user.save();
+
+    await sendEmail({
+      to: user.email,
+      subject: 'Password Reset OTP',
+      text: `You requested a password reset. Your OTP is: ${otp}. It will expire in 10 minutes.`,
+    });
+
+    return { message: 'Password reset OTP sent to your email' };
+  }
+
+  /**
+   * Reset password using reset OTP.
+   */
+  static async resetPassword(data: { email: string; otp: string; password: string }) {
+    const user = await User.findOne({ email: data.email }).select('+otp +otpExpires');
+    if (!user) {
+      throw ApiError.notFound('User not found');
+    }
+
+    if (!user.otp || !user.otpExpires || user.otp !== data.otp || user.otpExpires.getTime() < Date.now()) {
+      throw ApiError.badRequest('Invalid or expired reset OTP');
+    }
+
+    // Update password (pre-save hashes it) and clear OTP
+    user.password = data.password;
+    user.otp = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    return { message: 'Password reset successful. You can now login with your new password.' };
   }
 
   /**

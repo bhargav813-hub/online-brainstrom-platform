@@ -82,8 +82,11 @@ src/
 ### Auth (`/api/auth`)
 | Method | Route | Description |
 |--------|-------|-------------|
-| POST | `/register` | Register new user |
-| POST | `/login` | Login with email/password |
+| POST | `/register` | Register new user (sends verification OTP) |
+| POST | `/verify-otp` | Verify email using registration OTP |
+| POST | `/login` | Login with email/password (requires verified email) |
+| POST | `/forgot-password` | Request password reset OTP |
+| POST | `/reset-password` | Reset password using OTP |
 | POST | `/refresh-token` | Refresh access token |
 | POST | `/logout` | Logout (invalidate refresh token) |
 
