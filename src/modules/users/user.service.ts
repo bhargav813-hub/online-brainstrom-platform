@@ -34,4 +34,16 @@ export class UserService {
       .select('name email avatar')
       .limit(limit);
   }
+
+  /** Change user password. */
+  static async changePassword(userId: string, data: any) {
+    const user = await User.findById(userId).select('+password');
+    if (!user) throw ApiError.notFound('User not found');
+
+    const isMatch = await user.comparePassword(data.currentPassword);
+    if (!isMatch) throw ApiError.unauthorized('Incorrect current password');
+
+    user.password = data.newPassword;
+    await user.save();
+  }
 }

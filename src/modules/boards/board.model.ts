@@ -12,6 +12,8 @@ export interface IBoard extends Document {
   createdBy: mongoose.Types.ObjectId;
   isArchived: boolean;
   archivedAt?: Date;
+  isPublic: boolean;
+  shareToken?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -45,6 +47,15 @@ const boardSchema = new Schema<IBoard>(
     },
     archivedAt: {
       type: Date,
+    },
+    isPublic: {
+      type: Boolean,
+      default: false,
+    },
+    shareToken: {
+      type: String,
+      default: null,
+      index: true,
     },
   },
   { timestamps: true }

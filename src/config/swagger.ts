@@ -89,6 +89,14 @@ const options: swaggerJsdoc.Options = {
             },
           },
         },
+        ChangePasswordInput: {
+          type: 'object',
+          required: ['currentPassword', 'newPassword'],
+          properties: {
+            currentPassword: { type: 'string', minLength: 6, maxLength: 128 },
+            newPassword: { type: 'string', minLength: 6, maxLength: 128 },
+          },
+        },
         // ── Workspace ──
         CreateWorkspaceInput: {
           type: 'object',
@@ -281,6 +289,9 @@ const options: swaggerJsdoc.Options = {
       '/api/users/search': {
         get: { tags: ['Users'], summary: 'Search users', parameters: [{ in: 'query', name: 'q', schema: { type: 'string' }, description: 'Search query' }], responses: { '200': { description: 'Search results' } } },
       },
+      '/api/users/change-password': {
+        put: { tags: ['Users'], summary: 'Change current user password (requires auth)', requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ChangePasswordInput' } } } }, responses: { '200': { description: 'Password changed successfully' }, '400': { description: 'Validation error' }, '401': { description: 'Incorrect current password or unauthorized' } } },
+      },
       // ════════════ WORKSPACES ════════════
       '/api/workspaces': {
         post: { tags: ['Workspaces'], summary: 'Create workspace', requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateWorkspaceInput' } } } }, responses: { '201': { description: 'Workspace created' } } },
@@ -317,6 +328,18 @@ const options: swaggerJsdoc.Options = {
       },
       '/api/boards/{boardId}/unarchive': {
         patch: { tags: ['Boards'], summary: 'Unarchive board', parameters: [{ in: 'path', name: 'boardId', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Board unarchived' } } },
+      },
+      '/api/boards/shared/{shareToken}': {
+        get: { tags: ['Boards'], summary: 'Get shared board by token (Public)', security: [], parameters: [{ in: 'path', name: 'shareToken', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Shared board details, sessions, and ideas' }, '404': { description: 'Board not found or not public' } } },
+      },
+      '/api/boards/{boardId}/share': {
+        post: { tags: ['Boards'], summary: 'Share board publicly (admin/facilitator)', parameters: [{ in: 'path', name: 'boardId', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Board shared successfully' } } },
+      },
+      '/api/boards/{boardId}/unshare': {
+        post: { tags: ['Boards'], summary: 'Disable board public sharing (admin/facilitator)', parameters: [{ in: 'path', name: 'boardId', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Board unshared successfully' } } },
+      },
+      '/api/boards/{boardId}/export': {
+        get: { tags: ['Boards'], summary: 'Export board as PDF or JSON', parameters: [{ in: 'path', name: 'boardId', required: true, schema: { type: 'string' } }, { in: 'query', name: 'format', schema: { type: 'string', enum: ['pdf', 'json'] }, description: 'Export format' }], responses: { '200': { description: 'Export file or JSON data' } } },
       },
       // ════════════ SESSIONS ════════════
       '/api/sessions': {

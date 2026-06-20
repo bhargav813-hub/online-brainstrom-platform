@@ -20,4 +20,9 @@ export class UserController {
     const users = await UserService.search(query);
     ApiResponse.success(res, users);
   });
+
+  static changePassword = asyncHandler(async (req: AuthRequest, res: Response) => {
+    await UserService.changePassword(req.user!.id, req.body);
+    ApiResponse.success(res, null, 'Password changed successfully');
+  });
 }
