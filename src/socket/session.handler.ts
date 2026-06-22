@@ -1,5 +1,7 @@
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import { SessionParticipant } from '../modules/sessions/sessionParticipant.model';
+import { Session } from '../modules/sessions/session.model';
+import { Workspace } from '../modules/workspaces/workspace.model';
 import { logger } from '../config/logger';
 import { ServerToClientEvents, ClientToServerEvents, InterServerEvents, SocketData } from '../types';
 
@@ -19,6 +21,29 @@ export const registerSessionHandlers = (io: TypedIO, socket: TypedSocket) => {
     try {
       const { sessionId } = data;
       const roomName = `session:${sessionId}`;
+
+      // Check session exists
+      const session = await Session.findById(sessionId);
+      if (!session) {
+        socket.emit('error', { message: 'Session not found' });
+        return;
+      }
+
+      // Check if user is a member of the workspace the session belongs to
+      const workspace = await Workspace.findById(session.workspace);
+      if (!workspace) {
+        socket.emit('error', { message: 'Workspace not found' });
+        return;
+      }
+
+      const isMember =
+        workspace.owner.toString() === socket.data.userId ||
+        workspace.members.some((m) => m.user.toString() === socket.data.userId);
+
+      if (!isMember) {
+        socket.emit('error', { message: 'Forbidden: You are not a member of this workspace' });
+        return;
+      }
 
       // Join the Socket.IO room
       socket.join(roomName);
@@ -102,12 +127,35 @@ export const registerSessionHandlers = (io: TypedIO, socket: TypedSocket) => {
    */
   socket.on('disconnect', async () => {
     try {
+      // Find all active sessions the user is currently in before updating
+      const activeParticipations = await SessionParticipant.find({
+        user: socket.data.userId,
+        isActive: true,
+      });
+
       const updated = await SessionParticipant.updateMany(
         { user: socket.data.userId, isActive: true },
         { isActive: false, leftAt: new Date() }
       );
 
-      logger.info(`User ${socket.data.email} disconnected. Updated ${updated.modifiedCount} sessions.`);
+      // Notify each session room
+      for (const participation of activeParticipations) {
+        const roomName = `session:${participation.session}`;
+        
+        const remainingParticipants = await SessionParticipant.find({
+          session: participation.session,
+          isActive: true,
+        }).populate('user', 'name email avatar');
+
+        io.to(roomName).emit('session:participants', {
+          participants: remainingParticipants.map((p) => ({
+            userId: p.user,
+            joinedAt: p.joinedAt,
+          })),
+        });
+      }
+
+      logger.info(`User ${socket.data.email} disconnected. Updated ${updated.modifiedCount} sessions and notified remaining participants.`);
     } catch (error) {
       logger.error('Error on socket disconnect:', error);
     }

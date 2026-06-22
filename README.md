@@ -82,8 +82,11 @@ src/
 ### Auth (`/api/auth`)
 | Method | Route | Description |
 |--------|-------|-------------|
-| POST | `/register` | Register new user |
-| POST | `/login` | Login with email/password |
+| POST | `/register` | Register new user (sends verification OTP) |
+| POST | `/verify-otp` | Verify email using registration OTP |
+| POST | `/login` | Login with email/password (requires verified email) |
+| POST | `/forgot-password` | Request password reset OTP |
+| POST | `/reset-password` | Reset password using OTP |
 | POST | `/refresh-token` | Refresh access token |
 | POST | `/logout` | Logout (invalidate refresh token) |
 
@@ -92,7 +95,9 @@ src/
 |--------|-------|-------------|
 | GET | `/me` | Get current user profile |
 | PUT | `/me` | Update profile |
+| PUT | `/change-password` | Change current user password (requires auth) |
 | GET | `/search?q=` | Search users by name/email |
+
 
 ### Workspaces (`/api/workspaces`)
 | Method | Route | Description |
@@ -116,6 +121,11 @@ src/
 | PATCH | `/:boardId/archive` | Archive board |
 | PATCH | `/:boardId/unarchive` | Unarchive board |
 | DELETE | `/:boardId` | Delete board |
+| POST | `/:boardId/share` | Share board publicly |
+| POST | `/:boardId/unshare` | Disable board public sharing |
+| GET | `/shared/:shareToken` | Get shared board by token (Public) |
+| GET | `/:boardId/export?format=` | Export board as PDF (`pdf`) or JSON (`json`) |
+
 
 ### Sessions (`/api/sessions`)
 | Method | Route | Description |

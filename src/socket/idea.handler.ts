@@ -1,11 +1,46 @@
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import { IdeaService } from '../modules/ideas/idea.service';
 import { VoteService } from '../modules/votes/vote.service';
+import { Session } from '../modules/sessions/session.model';
+import { Workspace } from '../modules/workspaces/workspace.model';
+import { Idea } from '../modules/ideas/idea.model';
 import { logger } from '../config/logger';
-import { ServerToClientEvents, ClientToServerEvents, InterServerEvents, SocketData } from '../types';
+import { ServerToClientEvents, ClientToServerEvents, InterServerEvents, SocketData, UserRole } from '../types';
 
 type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
 type TypedIO = SocketIOServer<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
+
+/**
+ * Helpers to verify WebSocket authorization
+ */
+async function checkSessionMembership(sessionId: string, userId: string): Promise<boolean> {
+  const session = await Session.findById(sessionId);
+  if (!session) return false;
+  const workspace = await Workspace.findById(session.workspace);
+  if (!workspace) return false;
+  return (
+    workspace.owner.toString() === userId ||
+    workspace.members.some((m) => m.user.toString() === userId)
+  );
+}
+
+async function checkIdeaOwnerOrFacilitator(ideaId: string, userId: string): Promise<boolean> {
+  const idea = await Idea.findById(ideaId);
+  if (!idea) return false;
+  if (idea.author.toString() === userId) return true;
+  
+  const session = await Session.findById(idea.session);
+  if (!session) return false;
+  const workspace = await Workspace.findById(session.workspace);
+  if (!workspace) return false;
+  
+  if (workspace.owner.toString() === userId) return true;
+  
+  const member = workspace.members.find((m) => m.user.toString() === userId);
+  if (!member) return false;
+  
+  return [UserRole.WORKSPACE_ADMIN, UserRole.FACILITATOR].includes(member.role);
+}
 
 /**
  * Idea Socket Handlers
@@ -18,6 +53,12 @@ export const registerIdeaHandlers = (io: TypedIO, socket: TypedSocket) => {
    */
   socket.on('idea:create', async (data) => {
     try {
+      const isMember = await checkSessionMembership(data.sessionId, socket.data.userId);
+      if (!isMember) {
+        socket.emit('error', { message: 'Forbidden: You are not a member of this workspace' });
+        return;
+      }
+
       const idea = await IdeaService.create(
         {
           title: data.title,
@@ -43,6 +84,12 @@ export const registerIdeaHandlers = (io: TypedIO, socket: TypedSocket) => {
    */
   socket.on('idea:update', async (data) => {
     try {
+      const isAuthorized = await checkIdeaOwnerOrFacilitator(data.ideaId, socket.data.userId);
+      if (!isAuthorized) {
+        socket.emit('error', { message: 'Forbidden: Only the author or facilitator can update this idea' });
+        return;
+      }
+
       const idea = await IdeaService.update(
         data.ideaId,
         { title: data.title, content: data.content },
@@ -65,6 +112,12 @@ export const registerIdeaHandlers = (io: TypedIO, socket: TypedSocket) => {
    */
   socket.on('idea:delete', async (data) => {
     try {
+      const isAuthorized = await checkIdeaOwnerOrFacilitator(data.ideaId, socket.data.userId);
+      if (!isAuthorized) {
+        socket.emit('error', { message: 'Forbidden: Only the author or facilitator can delete this idea' });
+        return;
+      }
+
       const idea = await IdeaService.delete(data.ideaId, socket.data.userId);
 
       const sessionId = (idea as any).session.toString();
@@ -80,6 +133,12 @@ export const registerIdeaHandlers = (io: TypedIO, socket: TypedSocket) => {
    */
   socket.on('idea:move', async (data) => {
     try {
+      const isAuthorized = await checkIdeaOwnerOrFacilitator(data.ideaId, socket.data.userId);
+      if (!isAuthorized) {
+        socket.emit('error', { message: 'Forbidden: Only the author or facilitator can move this idea' });
+        return;
+      }
+
       const idea = await IdeaService.move(data.ideaId, data.newParentId, socket.data.userId);
 
       const sessionId = (idea as any).session.toString();
@@ -95,11 +154,16 @@ export const registerIdeaHandlers = (io: TypedIO, socket: TypedSocket) => {
    */
   socket.on('vote:cast', async (data) => {
     try {
-      const { Idea } = await import('../modules/ideas/idea.model');
       const idea = await Idea.findById(data.ideaId);
       if (!idea) return;
 
       const sessionId = idea.session.toString();
+      const isMember = await checkSessionMembership(sessionId, socket.data.userId);
+      if (!isMember) {
+        socket.emit('error', { message: 'Forbidden: You are not a member of this workspace' });
+        return;
+      }
+
       const vote = await VoteService.castVote(
         { ideaId: data.ideaId, sessionId, type: data.type, weight: data.weight },
         socket.data.userId

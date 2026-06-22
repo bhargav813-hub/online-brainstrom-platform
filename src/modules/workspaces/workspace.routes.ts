@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { WorkspaceController } from './workspace.controller';
 import { authenticate } from '../../middleware/auth.middleware';
-import { requireRole } from '../../middleware/rbac.middleware';
+import { requireRole, requireMembership } from '../../middleware/rbac.middleware';
 import { validate } from '../../middleware/validate.middleware';
 import { createWorkspaceSchema, inviteUserSchema, assignRoleSchema } from './workspace.validators';
 import { UserRole } from '../../types';
@@ -13,7 +13,7 @@ router.use(authenticate);
 
 router.post('/', validate(createWorkspaceSchema), WorkspaceController.create);
 router.get('/', WorkspaceController.getAll);
-router.get('/:workspaceId', WorkspaceController.getById);
+router.get('/:workspaceId', requireMembership, WorkspaceController.getById);
 router.put('/:workspaceId', requireRole(UserRole.WORKSPACE_ADMIN), WorkspaceController.update);
 router.delete('/:workspaceId', requireRole(UserRole.WORKSPACE_ADMIN), WorkspaceController.delete);
 

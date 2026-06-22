@@ -11,13 +11,31 @@ export class AuthController {
   /** POST /api/auth/register */
   static register = asyncHandler(async (req: Request, res: Response) => {
     const result = await AuthService.register(req.body);
-    ApiResponse.created(res, result, 'Registration successful');
+    ApiResponse.created(res, result, 'Verification OTP sent to your email');
   });
 
   /** POST /api/auth/login */
   static login = asyncHandler(async (req: Request, res: Response) => {
     const result = await AuthService.login(req.body);
     ApiResponse.success(res, result, 'Login successful');
+  });
+
+  /** POST /api/auth/verify-otp */
+  static verifyOtp = asyncHandler(async (req: Request, res: Response) => {
+    const result = await AuthService.verifyOtp(req.body);
+    ApiResponse.success(res, result, 'Email verification successful');
+  });
+
+  /** POST /api/auth/forgot-password */
+  static forgotPassword = asyncHandler(async (req: Request, res: Response) => {
+    const result = await AuthService.forgotPassword(req.body.email);
+    ApiResponse.success(res, result, 'Password reset OTP sent to your email');
+  });
+
+  /** POST /api/auth/reset-password */
+  static resetPassword = asyncHandler(async (req: Request, res: Response) => {
+    const result = await AuthService.resetPassword(req.body);
+    ApiResponse.success(res, result, 'Password reset successful');
   });
 
   /** POST /api/auth/refresh-token */

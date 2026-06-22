@@ -42,4 +42,36 @@ export class BoardController {
     await BoardService.delete(req.params.boardId);
     ApiResponse.success(res, null, 'Board deleted');
   });
+
+  static share = asyncHandler(async (req: Request, res: Response) => {
+    const board = await BoardService.share(req.params.boardId);
+    ApiResponse.success(res, { shareToken: board.shareToken, isPublic: board.isPublic }, 'Board shared successfully');
+  });
+
+  static unshare = asyncHandler(async (req: Request, res: Response) => {
+    const board = await BoardService.unshare(req.params.boardId);
+    ApiResponse.success(res, { isPublic: board.isPublic }, 'Board unshared successfully');
+  });
+
+  static getShared = asyncHandler(async (req: Request, res: Response) => {
+    const data = await BoardService.getShared(req.params.shareToken);
+    ApiResponse.success(res, data);
+  });
+
+  static exportBoard = asyncHandler(async (req: Request, res: Response) => {
+    const format = (req.query.format as string) === 'json' ? 'json' : 'pdf';
+    
+    if (format === 'json') {
+      const data = await BoardService.exportBoard(req.params.boardId, 'json');
+      return ApiResponse.success(res, data);
+    }
+
+    const doc = await BoardService.exportBoard(req.params.boardId, 'pdf') as any;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="board-export-${req.params.boardId}.pdf"`
+    );
+    doc.pipe(res);
+  });
 }
