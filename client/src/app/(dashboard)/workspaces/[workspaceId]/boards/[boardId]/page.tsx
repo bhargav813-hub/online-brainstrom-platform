@@ -6,6 +6,8 @@ import { SessionCard } from '@/features/sessions/components/SessionCard';
 import { CreateSessionModal } from '@/features/sessions/components/CreateSessionModal';
 import { useBoard } from '@/features/boards/hooks/useBoard';
 import { useSessions } from '@/features/sessions/hooks/useSession';
+import { useWorkspace } from '@/features/workspaces/hooks/useWorkspace';
+import { useAuthStore } from '@/store/auth.store';
 import { PageLoader } from '@/components/feedback/LoadingSpinner';
 import { ErrorMessage } from '@/components/feedback/ErrorMessage';
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -24,8 +26,19 @@ export default function BoardDetailPage({ params }: { params: Promise<{ workspac
   const { workspaceId, boardId } = use(params);
   const { data: board, isLoading: boardLoading } = useBoard(boardId);
   const { data: sessions, isLoading: sessionsLoading, error, refetch } = useSessions(boardId);
+  const { data: workspace } = useWorkspace(workspaceId);
+  const { user } = useAuthStore();
 
   const exportBoard = useExportBoard();
+
+  const getEntityId = (entity: any) => typeof entity === 'object' && entity !== null ? entity._id : entity;
+  
+  const isBoardCreator = board && user ? getEntityId(board.createdBy) === user._id : false;
+  const isWorkspaceOwner = workspace && user ? getEntityId(workspace.owner) === user._id : false;
+  const currentUserMember = workspace?.members?.find((m: any) => getEntityId(m.user) === user?._id);
+  const isWorkspaceAdminOrFacilitator = currentUserMember ? ['WORKSPACE_ADMIN', 'FACILITATOR'].includes(currentUserMember.role) : false;
+
+  const canCreateSession = isBoardCreator || isWorkspaceOwner || isWorkspaceAdminOrFacilitator;
 
   if (boardLoading || sessionsLoading) return <PageLoader />;
   if (error) return <PageContainer><ErrorMessage message="Failed to load sessions" retry={refetch} /></PageContainer>;
@@ -54,7 +67,7 @@ export default function BoardDetailPage({ params }: { params: Promise<{ workspac
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <CreateSessionModal boardId={boardId} workspaceId={workspaceId} />
+          {canCreateSession && <CreateSessionModal boardId={boardId} workspaceId={workspaceId} />}
         </div>
       }
     >
@@ -62,7 +75,12 @@ export default function BoardDetailPage({ params }: { params: Promise<{ workspac
         {board && <BoardSharePanel board={board} />}
       </div>
       {!sessions?.length ? (
-        <EmptyState icon={Sparkles} title="No sessions yet" description="Start a brainstorming session to generate ideas" action={<CreateSessionModal boardId={boardId} workspaceId={workspaceId} />} />
+        <EmptyState 
+          icon={Sparkles} 
+          title="No sessions yet" 
+          description={canCreateSession ? "Start a brainstorming session to generate ideas" : "Waiting for the board owner or facilitator to start a session"} 
+          action={canCreateSession ? <CreateSessionModal boardId={boardId} workspaceId={workspaceId} /> : undefined} 
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sessions.map((session, i) => (

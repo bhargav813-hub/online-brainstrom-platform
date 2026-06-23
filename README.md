@@ -204,8 +204,8 @@ src/
 
 | Role | Permissions |
 |------|------------|
-| **Participant** | Create/edit own ideas, vote, join sessions |
-| **Facilitator** | Manage sessions, invite users, manage clusters |
+| **Participant** | Create boards, manage sessions in own boards, create/edit own ideas, vote, join sessions |
+| **Facilitator** | Manage sessions in any board, invite users, manage clusters |
 | **Reviewer** | All participant permissions + approve ideas |
 | **Workspace Admin** | Full workspace control, role assignment, member management |
 

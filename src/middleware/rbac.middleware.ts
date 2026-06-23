@@ -204,6 +204,63 @@ export const requireBoardRole = (...allowedRoles: UserRole[]) => {
 };
 
 /**
+ * Checks if the user is the board owner, or a workspace admin/facilitator.
+ */
+export const requireBoardOwnerOrFacilitator = async (
+  req: AuthRequest,
+  _res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      throw ApiError.unauthorized('Authentication required');
+    }
+
+    const boardId = req.params.boardId || req.body.boardId;
+
+    if (!boardId) {
+      throw ApiError.badRequest('Board ID is required');
+    }
+
+    const board = await Board.findById(boardId);
+
+    if (!board) {
+      throw ApiError.notFound('Board not found');
+    }
+
+    if (board.createdBy.toString() === req.user.id) {
+      return next();
+    }
+
+    const workspace = await Workspace.findById(board.workspace);
+
+    if (!workspace) {
+      throw ApiError.notFound('Workspace not found');
+    }
+
+    if (workspace.owner.toString() === req.user.id) {
+      return next();
+    }
+
+    const member = workspace.members.find(
+      (m) => m.user.toString() === req.user!.id
+    );
+
+    if (!member) {
+      throw ApiError.forbidden('You are not a member of this workspace');
+    }
+
+    if ([UserRole.WORKSPACE_ADMIN, UserRole.FACILITATOR].includes(member.role)) {
+      return next();
+    }
+
+    throw ApiError.forbidden('Only the board owner or facilitator can perform this action');
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Checks if the authenticated user is a member of the workspace the session belongs to.
  */
 export const requireSessionMembership = async (

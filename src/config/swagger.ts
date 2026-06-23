@@ -343,7 +343,7 @@ const options: swaggerJsdoc.Options = {
       },
       // ════════════ SESSIONS ════════════
       '/api/sessions': {
-        post: { tags: ['Sessions'], summary: 'Create session', requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateSessionInput' } } } }, responses: { '201': { description: 'Session created' } } },
+        post: { tags: ['Sessions'], summary: 'Create session (requires Board Owner, Workspace Admin, or Facilitator)', requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateSessionInput' } } } }, responses: { '201': { description: 'Session created' }, '403': { description: 'Forbidden - Insufficient permissions' } } },
       },
       '/api/sessions/board/{boardId}': {
         get: { tags: ['Sessions'], summary: 'Get sessions by board', parameters: [{ in: 'path', name: 'boardId', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'List of sessions' } } },
