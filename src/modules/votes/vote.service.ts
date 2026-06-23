@@ -21,6 +21,10 @@ export class VoteService {
     if (!idea) throw ApiError.notFound('Idea not found');
     if (idea.isDeleted) throw ApiError.badRequest('Cannot vote on a deleted idea');
 
+    if (idea.session.toString() !== data.sessionId) {
+      throw ApiError.badRequest('Idea belongs to a different session');
+    }
+
     // Upsert the vote (one per user per idea)
     const existingVote = await Vote.findOne({ idea: data.ideaId, user: userId });
 

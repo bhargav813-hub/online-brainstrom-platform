@@ -1,4 +1,5 @@
 import { Cluster } from './cluster.model';
+import { Idea } from '../ideas/idea.model';
 import { ActivityLog } from '../activity/activity.model';
 import { ApiError } from '../../utils/apiError';
 import { ActivityAction } from '../../types';
@@ -12,6 +13,15 @@ export class ClusterService {
     data: { name: string; description?: string; sessionId: string; tags?: string[]; color?: string; ideaIds?: string[] },
     userId: string
   ) {
+    if (data.ideaIds && data.ideaIds.length > 0) {
+      const ideas = await Idea.find({ _id: { $in: data.ideaIds } });
+      for (const idea of ideas) {
+        if (idea.session.toString() !== data.sessionId) {
+          throw ApiError.badRequest('Cannot assign ideas from a different session');
+        }
+      }
+    }
+
     const cluster = await Cluster.create({
       name: data.name,
       description: data.description || '',
@@ -65,6 +75,15 @@ export class ClusterService {
   static async assignIdeas(clusterId: string, ideaIds: string[], userId: string) {
     const cluster = await Cluster.findById(clusterId);
     if (!cluster) throw ApiError.notFound('Cluster not found');
+
+    if (ideaIds && ideaIds.length > 0) {
+      const ideas = await Idea.find({ _id: { $in: ideaIds } });
+      for (const idea of ideas) {
+        if (idea.session.toString() !== cluster.session.toString()) {
+          throw ApiError.badRequest('Cannot assign ideas from a different session');
+        }
+      }
+    }
 
     // Add new ideas without duplicates
     const existingIds = cluster.ideas.map((id) => id.toString());

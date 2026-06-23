@@ -5,6 +5,7 @@ import { PageContainer } from '@/components/layout/PageContainer';
 import { useSession, useJoinSession, useLeaveSession, useUpdateSession } from '@/features/sessions/hooks/useSession';
 import { useIdeaHierarchy, useDeleteIdea } from '@/features/ideas/hooks/useIdeas';
 import { useActivity } from '@/features/activity/hooks/useActivity';
+import { useWorkspace } from '@/features/workspaces/hooks/useWorkspace';
 import { ClusterList } from '@/features/clusters/components/ClusterList';
 import { useSocket } from '@/providers/SocketProvider';
 import { IdeaNode } from '@/features/ideas/components/IdeaNode';
@@ -31,6 +32,7 @@ export default function SessionPage({ params }: { params: Promise<{ workspaceId:
   const { data: session, isLoading: sessionLoading, error: sessionError, refetch } = useSession(sessionId);
   const { data: ideas, isLoading: ideasLoading } = useIdeaHierarchy(sessionId);
   const { data: activityData } = useActivity(sessionId);
+  const { data: workspace } = useWorkspace(workspaceId);
   const joinSession = useJoinSession();
   const leaveSession = useLeaveSession();
   const updateSession = useUpdateSession(sessionId, boardId);
@@ -71,6 +73,19 @@ export default function SessionPage({ params }: { params: Promise<{ workspaceId:
 
   const facilitator = typeof session?.facilitator === 'object' ? session.facilitator : null;
   const isFacilitator = facilitator?._id === user?._id;
+  
+  // Calculate if the user has workspace-level permissions to manage the session
+  const isWorkspaceOwner = typeof workspace?.owner === 'object' 
+    ? workspace?.owner?._id === user?._id 
+    : workspace?.owner === user?._id;
+    
+  const memberRecord = workspace?.members?.find((m: any) => 
+    typeof m.user === 'object' ? m.user._id === user?._id : m.user === user?._id
+  );
+  const isWorkspaceAdminOrFacilitator = isWorkspaceOwner || (memberRecord && ['workspace_admin', 'facilitator'].includes(memberRecord.role));
+  
+  const canManage = isFacilitator || isWorkspaceAdminOrFacilitator;
+  
   const activeParticipants = session?.participants?.filter((p) => p.isActive) || [];
 
   const handleStatusChange = (status: SessionStatus) => {
@@ -141,7 +156,7 @@ export default function SessionPage({ params }: { params: Promise<{ workspaceId:
               ) : (
                 <div role="tree" className="space-y-1">
                   {ideas.map((idea) => (
-                    <IdeaNode key={idea._id} idea={idea} sessionId={sessionId} canEdit={isFacilitator} onDelete={(id) => deleteIdea.mutate(id)} />
+                    <IdeaNode key={idea._id} idea={idea} sessionId={sessionId} canEdit={canManage} onDelete={(id) => deleteIdea.mutate(id)} />
                   ))}
                 </div>
               )}
@@ -160,7 +175,7 @@ export default function SessionPage({ params }: { params: Promise<{ workspaceId:
             <TabsContent value="clusters">
               <Card>
                 <CardContent className="pt-4">
-                  <ClusterList sessionId={sessionId} canManage={isFacilitator} />
+                  <ClusterList sessionId={sessionId} canManage={canManage} />
                 </CardContent>
               </Card>
             </TabsContent>

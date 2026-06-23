@@ -178,6 +178,10 @@ export class IdeaService {
       const newParent = await Idea.findById(newParentId);
       if (!newParent) throw ApiError.notFound('New parent idea not found');
 
+      if (newParent.session.toString() !== idea.session.toString()) {
+        throw ApiError.badRequest('New parent idea belongs to a different session');
+      }
+
       // Prevent moving a parent under its own descendant
       if (newParent.path.includes(`,${ideaId},`)) {
         throw ApiError.badRequest('Cannot move an idea under its own descendant');
