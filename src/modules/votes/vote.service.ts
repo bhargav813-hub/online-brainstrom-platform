@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Vote } from './vote.model';
 import { Idea } from '../ideas/idea.model';
 import { ActivityLog } from '../activity/activity.model';
@@ -127,13 +128,15 @@ export class VoteService {
 
   /** Recalculate and update vote counts on an idea. */
   private static async recalculateVoteCounts(ideaId: string) {
+    const ideaObjectId = new mongoose.Types.ObjectId(ideaId);
+    
     const [upvotes, downvotes] = await Promise.all([
       Vote.aggregate([
-        { $match: { idea: ideaId, type: VoteType.UPVOTE } },
+        { $match: { idea: ideaObjectId, type: VoteType.UPVOTE } },
         { $group: { _id: null, total: { $sum: '$weight' } } },
       ]),
       Vote.aggregate([
-        { $match: { idea: ideaId, type: VoteType.DOWNVOTE } },
+        { $match: { idea: ideaObjectId, type: VoteType.DOWNVOTE } },
         { $group: { _id: null, total: { $sum: '$weight' } } },
       ]),
     ]);

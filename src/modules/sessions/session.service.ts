@@ -85,7 +85,11 @@ export class SessionService {
       isActive: true,
     }).populate('user', 'name email avatar');
 
-    return { session, participants };
+    const sessionObj = session.toObject();
+    return {
+      ...sessionObj,
+      participants
+    };
   }
 
   /** Update session (title, description, status). */
