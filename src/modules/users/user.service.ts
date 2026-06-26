@@ -22,13 +22,12 @@ export class UserService {
     return user;
   }
 
-  /** Search users by name or email (for invite autocomplete). */
+  /** Search users by exact email (to prevent global user enumeration/scraping). */
   static async search(query: string, limit = 10) {
+    if (!query) return [];
+    
     return User.find({
-      $or: [
-        { name: { $regex: query, $options: 'i' } },
-        { email: { $regex: query, $options: 'i' } },
-      ],
+      email: query.toLowerCase(),
       isActive: true,
     })
       .select('name email avatar')

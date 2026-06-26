@@ -204,6 +204,63 @@ export const requireBoardRole = (...allowedRoles: UserRole[]) => {
 };
 
 /**
+ * Checks if the user is the board owner, or a workspace admin/facilitator.
+ */
+export const requireBoardOwnerOrFacilitator = async (
+  req: AuthRequest,
+  _res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      throw ApiError.unauthorized('Authentication required');
+    }
+
+    const boardId = req.params.boardId || req.body.boardId;
+
+    if (!boardId) {
+      throw ApiError.badRequest('Board ID is required');
+    }
+
+    const board = await Board.findById(boardId);
+
+    if (!board) {
+      throw ApiError.notFound('Board not found');
+    }
+
+    if (board.createdBy.toString() === req.user.id) {
+      return next();
+    }
+
+    const workspace = await Workspace.findById(board.workspace);
+
+    if (!workspace) {
+      throw ApiError.notFound('Workspace not found');
+    }
+
+    if (workspace.owner.toString() === req.user.id) {
+      return next();
+    }
+
+    const member = workspace.members.find(
+      (m) => m.user.toString() === req.user!.id
+    );
+
+    if (!member) {
+      throw ApiError.forbidden('You are not a member of this workspace');
+    }
+
+    if ([UserRole.WORKSPACE_ADMIN, UserRole.FACILITATOR].includes(member.role)) {
+      return next();
+    }
+
+    throw ApiError.forbidden('Only the board owner or facilitator can perform this action');
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Checks if the authenticated user is a member of the workspace the session belongs to.
  */
 export const requireSessionMembership = async (
@@ -300,6 +357,63 @@ export const requireSessionRole = (...allowedRoles: UserRole[]) => {
       next(error);
     }
   };
+};
+
+/**
+ * Checks if the user is the session facilitator, or a workspace admin/facilitator.
+ */
+export const requireSessionFacilitatorOrAdmin = async (
+  req: AuthRequest,
+  _res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      throw ApiError.unauthorized('Authentication required');
+    }
+
+    const sessionId = req.params.sessionId || req.body.sessionId;
+
+    if (!sessionId) {
+      throw ApiError.badRequest('Session ID is required');
+    }
+
+    const session = await Session.findById(sessionId);
+
+    if (!session) {
+      throw ApiError.notFound('Session not found');
+    }
+
+    if (session.facilitator.toString() === req.user.id) {
+      return next();
+    }
+
+    const workspace = await Workspace.findById(session.workspace);
+
+    if (!workspace) {
+      throw ApiError.notFound('Workspace not found');
+    }
+
+    if (workspace.owner.toString() === req.user.id) {
+      return next();
+    }
+
+    const member = workspace.members.find(
+      (m) => m.user.toString() === req.user!.id
+    );
+
+    if (!member) {
+      throw ApiError.forbidden('You are not a member of this workspace');
+    }
+
+    if ([UserRole.WORKSPACE_ADMIN, UserRole.FACILITATOR].includes(member.role)) {
+      return next();
+    }
+
+    throw ApiError.forbidden('Only the session facilitator or workspace admin can perform this action');
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
@@ -462,6 +576,69 @@ export const requireClusterMembership = async (
     }
 
     next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Checks if the user is the session facilitator or an admin/facilitator for the cluster's session.
+ */
+export const requireClusterFacilitatorOrAdmin = async (
+  req: AuthRequest,
+  _res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      throw ApiError.unauthorized('Authentication required');
+    }
+
+    const clusterId = req.params.clusterId || req.body.clusterId;
+
+    if (!clusterId) {
+      throw ApiError.badRequest('Cluster ID is required');
+    }
+
+    const cluster = await Cluster.findById(clusterId);
+
+    if (!cluster) {
+      throw ApiError.notFound('Cluster not found');
+    }
+
+    const session = await Session.findById(cluster.session);
+
+    if (!session) {
+      throw ApiError.notFound('Session not found');
+    }
+
+    if (session.facilitator.toString() === req.user.id) {
+      return next();
+    }
+
+    const workspace = await Workspace.findById(session.workspace);
+
+    if (!workspace) {
+      throw ApiError.notFound('Workspace not found');
+    }
+
+    if (workspace.owner.toString() === req.user.id) {
+      return next();
+    }
+
+    const member = workspace.members.find(
+      (m) => m.user.toString() === req.user!.id
+    );
+
+    if (!member) {
+      throw ApiError.forbidden('You are not a member of this workspace');
+    }
+
+    if ([UserRole.WORKSPACE_ADMIN, UserRole.FACILITATOR].includes(member.role)) {
+      return next();
+    }
+
+    throw ApiError.forbidden('Only the session facilitator or workspace admin can modify clusters');
   } catch (error) {
     next(error);
   }

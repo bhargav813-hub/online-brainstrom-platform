@@ -6,7 +6,7 @@ import mongoose, { Schema, Document } from 'mongoose';
  * Boards can be archived to preserve history without cluttering active views.
  */
 export interface IBoard extends Document {
-  title: string;
+  name: string;
   description: string;
   workspace: mongoose.Types.ObjectId;
   createdBy: mongoose.Types.ObjectId;
@@ -20,9 +20,9 @@ export interface IBoard extends Document {
 
 const boardSchema = new Schema<IBoard>(
   {
-    title: {
+    name: {
       type: String,
-      required: [true, 'Board title is required'],
+      required: [true, 'Board name is required'],
       trim: true,
       maxlength: 200,
     },
@@ -54,8 +54,8 @@ const boardSchema = new Schema<IBoard>(
     },
     shareToken: {
       type: String,
-      default: null,
-      index: true,
+      unique: true,
+      sparse: true,
     },
   },
   { timestamps: true }

@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Vote } from './vote.model';
 import { Idea } from '../ideas/idea.model';
 import { ActivityLog } from '../activity/activity.model';
@@ -19,6 +20,10 @@ export class VoteService {
     const idea = await Idea.findById(data.ideaId);
     if (!idea) throw ApiError.notFound('Idea not found');
     if (idea.isDeleted) throw ApiError.badRequest('Cannot vote on a deleted idea');
+
+    if (idea.session.toString() !== data.sessionId) {
+      throw ApiError.badRequest('Idea belongs to a different session');
+    }
 
     // Upsert the vote (one per user per idea)
     const existingVote = await Vote.findOne({ idea: data.ideaId, user: userId });
@@ -127,13 +132,15 @@ export class VoteService {
 
   /** Recalculate and update vote counts on an idea. */
   private static async recalculateVoteCounts(ideaId: string) {
+    const ideaObjectId = new mongoose.Types.ObjectId(ideaId);
+    
     const [upvotes, downvotes] = await Promise.all([
       Vote.aggregate([
-        { $match: { idea: ideaId, type: VoteType.UPVOTE } },
+        { $match: { idea: ideaObjectId, type: VoteType.UPVOTE } },
         { $group: { _id: null, total: { $sum: '$weight' } } },
       ]),
       Vote.aggregate([
-        { $match: { idea: ideaId, type: VoteType.DOWNVOTE } },
+        { $match: { idea: ideaObjectId, type: VoteType.DOWNVOTE } },
         { $group: { _id: null, total: { $sum: '$weight' } } },
       ]),
     ]);

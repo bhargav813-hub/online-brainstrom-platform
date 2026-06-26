@@ -9,9 +9,9 @@ import { PaginationOptions, getPaginationMeta } from '../../utils/pagination';
  */
 export class BoardService {
   /** Create a new board in a workspace. */
-  static async create(data: { title: string; description?: string; workspaceId: string }, userId: string) {
+  static async create(data: { name: string; description?: string; workspaceId: string }, userId: string) {
     const board = await Board.create({
-      title: data.title,
+      name: data.name,
       description: data.description || '',
       workspace: data.workspaceId,
       createdBy: userId,
@@ -50,7 +50,7 @@ export class BoardService {
   }
 
   /** Update a board. */
-  static async update(boardId: string, data: { title?: string; description?: string }) {
+  static async update(boardId: string, data: { name?: string; description?: string }) {
     const board = await Board.findByIdAndUpdate(boardId, data, { new: true, runValidators: true });
     if (!board) throw ApiError.notFound('Board not found');
     return board;
@@ -150,7 +150,7 @@ export class BoardService {
       return {
         board: {
           id: board._id,
-          title: board.title,
+          name: board.name,
           description: board.description,
           workspace: board.workspace,
           createdBy: board.createdBy,
@@ -189,7 +189,7 @@ export class BoardService {
     const textColor = '#0f172a'; 
 
     // Header Title
-    doc.fillColor(primaryColor).fontSize(24).font('Helvetica-Bold').text(board.title);
+    doc.fillColor(primaryColor).fontSize(24).font('Helvetica-Bold').text(board.name);
     if (board.description) {
       doc.moveDown(0.3);
       doc.fillColor(secondaryColor).fontSize(12).font('Helvetica-Oblique').text(board.description);

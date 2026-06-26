@@ -23,6 +23,13 @@ export class SessionService {
     },
     userId: string
   ) {
+    const { Board } = await import('../boards/board.model');
+    const board = await Board.findById(data.boardId);
+    if (!board) throw ApiError.notFound('Board not found');
+    if (board.workspace.toString() !== data.workspaceId) {
+      throw ApiError.badRequest('Board does not belong to the specified workspace');
+    }
+
     const session = await Session.create({
       title: data.title,
       description: data.description || '',
@@ -85,7 +92,11 @@ export class SessionService {
       isActive: true,
     }).populate('user', 'name email avatar');
 
-    return { session, participants };
+    const sessionObj = session.toObject();
+    return {
+      ...sessionObj,
+      participants
+    };
   }
 
   /** Update session (title, description, status). */
