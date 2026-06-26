@@ -25,6 +25,10 @@ import activityRoutes from './modules/activity/activity.routes';
  */
 const app = express();
 
+// Trust proxy is required when deployed on platforms like Render or Vercel
+// so the rate limiter can read the actual user IP instead of the proxy IP.
+app.set('trust proxy', 1);
+
 // ==================== SECURITY MIDDLEWARE ====================
 app.use(helmet());                              // Secure HTTP headers
 app.use(cors({
