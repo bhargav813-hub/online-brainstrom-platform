@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Plus, Pencil, Trash2, GripVertical } from 'lucide-react';
+import { ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { UserAvatar } from '@/components/shared/UserAvatar';
@@ -27,7 +27,7 @@ export function IdeaNode({ idea, sessionId, depth = 0, canEdit, onEdit, onDelete
   const author = typeof idea.author === 'object' ? idea.author : null;
 
   return (
-    <div className="group/node" role="treeitem" aria-expanded={expanded}>
+    <div className="group/node" role="treeitem" aria-expanded={expanded} aria-selected={false}>
       <div className={cn('flex items-start gap-2 rounded-lg p-2 transition-colors hover:bg-muted/50', depth > 0 && 'ml-6 border-l-2 border-muted pl-4')}>
         <button onClick={() => setExpanded(!expanded)} className="mt-1 shrink-0 text-muted-foreground hover:text-foreground" aria-label={expanded ? 'Collapse' : 'Expand'}>
           <ChevronRight className={cn('h-4 w-4 transition-transform', expanded && 'rotate-90')} />

@@ -18,7 +18,7 @@ interface CreateSessionModalProps {
 export function CreateSessionModal({ boardId, workspaceId }: CreateSessionModalProps) {
   const [open, setOpen] = useState(false);
   const { register, handleSubmit, formState: { errors }, reset } = useForm<CreateSessionFormData>({
-    resolver: zodResolver(createSessionSchema) as any,
+    resolver: zodResolver(createSessionSchema),
   });
   const createSession = useCreateSession(boardId);
 
@@ -41,7 +41,7 @@ export function CreateSessionModal({ boardId, workspaceId }: CreateSessionModalP
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <FormField id="session-title" label="Title" placeholder="Brainstorming Session" error={errors.title} register={register('title')} />
           <FormField id="session-desc" label="Description" placeholder="Session description..." error={errors.description} register={register('description')} multiline />
-          <FormField id="session-max" label="Max Participants" type="number" placeholder="10" error={errors.maxParticipants} register={register('maxParticipants')} />
+          <FormField id="session-max" label="Max Participants" type="number" placeholder="10" error={errors.maxParticipants} register={register('maxParticipants', { valueAsNumber: true })} />
           <Button type="submit" className="w-full" disabled={createSession.isPending}>
             {createSession.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating...</> : 'Create Session'}
           </Button>

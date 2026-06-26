@@ -13,7 +13,7 @@ import { userService } from '@/services/user.service';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+
 
 const profileSchema = z.object({ name: z.string().min(2).max(50), avatar: z.string().url().optional().or(z.literal('')) });
 const passwordSchema = z.object({ currentPassword: z.string().min(6), newPassword: z.string().min(6), confirmPassword: z.string() }).refine((d) => d.newPassword === d.confirmPassword, { message: 'Passwords must match', path: ['confirmPassword'] });

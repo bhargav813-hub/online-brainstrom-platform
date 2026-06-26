@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import PDFDocument from 'pdfkit';
+import crypto from 'crypto';
 import { Board } from './board.model';
 import { ApiError } from '../../utils/apiError';
 import { PaginationOptions, getPaginationMeta } from '../../utils/pagination';
@@ -87,7 +88,7 @@ export class BoardService {
 
   /** Share a board publicly. */
   static async share(boardId: string) {
-    const shareToken = require('crypto').randomUUID();
+    const shareToken = crypto.randomUUID();
     const board = await Board.findByIdAndUpdate(
       boardId,
       { isPublic: true, shareToken },

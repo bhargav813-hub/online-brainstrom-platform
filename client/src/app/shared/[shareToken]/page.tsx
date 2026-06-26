@@ -128,8 +128,8 @@ export default function SharedBoardPage({ params }: { params: Promise<{ shareTok
           {sessions.length > 0 && (
             <div className="space-y-6 pt-6 border-t">
               <h2 className="text-2xl font-bold">Brainstorming Sessions</h2>
-              {sessions.map((session: any) => {
-                const sessionIdeas = ideas.filter((i: any) => i.session === session._id);
+              {sessions.map((session) => {
+                const sessionIdeas = ideas.filter((i) => i.session === session._id);
                 return (
                   <Card key={session._id} className="border-muted bg-muted/20">
                     <CardHeader>
@@ -146,7 +146,7 @@ export default function SharedBoardPage({ params }: { params: Promise<{ shareTok
                         </div>
                       ) : (
                         <div className="grid gap-3 sm:grid-cols-2">
-                          {sessionIdeas.map((idea: any) => (
+                          {sessionIdeas.map((idea) => (
                             <div key={idea._id} className="rounded-lg border bg-background p-4 shadow-sm">
                               <div className="flex items-start justify-between gap-2 mb-2">
                                 <h3 className="font-medium text-sm leading-tight">{idea.title}</h3>
@@ -158,7 +158,7 @@ export default function SharedBoardPage({ params }: { params: Promise<{ shareTok
                               {idea.content && <p className="text-xs text-muted-foreground mb-3 line-clamp-3">{idea.content}</p>}
                               <div className="flex items-center justify-between mt-auto pt-2 border-t border-muted/50">
                                 <div className="text-[10px] text-muted-foreground">
-                                  By <span className="font-medium text-foreground">{idea.author?.name || 'Anonymous'}</span>
+                                  By <span className="font-medium text-foreground">{typeof idea.author === 'object' && idea.author !== null && 'name' in idea.author ? idea.author.name : 'Anonymous'}</span>
                                 </div>
                                 {idea.tags && idea.tags.length > 0 && (
                                   <div className="flex gap-1 flex-wrap justify-end">

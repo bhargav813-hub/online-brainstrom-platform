@@ -1,6 +1,6 @@
 import apiClient from './api-client';
 import type { ApiResponse } from '@/types/api.types';
-import type { Board, CreateBoardPayload, UpdateBoardPayload, ExportFormat } from '@/types/board.types';
+import type { Board, CreateBoardPayload, UpdateBoardPayload, ExportFormat, SharedBoardResponse } from '@/types/board.types';
 
 export const boardService = {
   getByWorkspace: async (workspaceId: string) => {
@@ -49,7 +49,7 @@ export const boardService = {
   },
 
   getShared: async (shareToken: string) => {
-    const { data } = await apiClient.get<ApiResponse<any>>(`/boards/shared/${shareToken}`);
+    const { data } = await apiClient.get<ApiResponse<SharedBoardResponse>>(`/boards/shared/${shareToken}`);
     return data.data;
   },
 

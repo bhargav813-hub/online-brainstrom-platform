@@ -31,11 +31,11 @@ export default function BoardDetailPage({ params }: { params: Promise<{ workspac
 
   const exportBoard = useExportBoard();
 
-  const getEntityId = (entity: any) => typeof entity === 'object' && entity !== null ? entity._id : entity;
+  const getEntityId = (entity: unknown) => typeof entity === 'object' && entity !== null ? (entity as { _id: string })._id : entity;
   
   const isBoardCreator = board && user ? getEntityId(board.createdBy) === user._id : false;
   const isWorkspaceOwner = workspace && user ? getEntityId(workspace.owner) === user._id : false;
-  const currentUserMember = workspace?.members?.find((m: any) => getEntityId(m.user) === user?._id);
+  const currentUserMember = workspace?.members?.find((m: { user: unknown, role: string }) => getEntityId(m.user) === user?._id);
   const isWorkspaceAdminOrFacilitator = currentUserMember ? ['WORKSPACE_ADMIN', 'FACILITATOR'].includes(currentUserMember.role) : false;
 
   const canCreateSession = isBoardCreator || isWorkspaceOwner || isWorkspaceAdminOrFacilitator;
