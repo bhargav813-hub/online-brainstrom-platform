@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect } from 'react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { useSession, useJoinSession, useLeaveSession, useUpdateSession } from '@/features/sessions/hooks/useSession';
 import { useIdeaHierarchy, useDeleteIdea } from '@/features/ideas/hooks/useIdeas';
@@ -49,7 +49,7 @@ export default function SessionPage({ params }: { params: Promise<{ workspaceId:
       leaveSession.mutate(sessionId);
       socket?.emit('session:leave', { sessionId });
     };
-  }, [sessionId]);
+  }, [sessionId, joinSession, leaveSession, socket]);
 
   // Socket event listeners for real-time updates
   useEffect(() => {
@@ -79,8 +79,8 @@ export default function SessionPage({ params }: { params: Promise<{ workspaceId:
     ? workspace?.owner?._id === user?._id 
     : workspace?.owner === user?._id;
     
-  const memberRecord = workspace?.members?.find((m: any) => 
-    typeof m.user === 'object' ? m.user._id === user?._id : m.user === user?._id
+  const memberRecord = workspace?.members?.find((m: { user: unknown, role: string }) => 
+    typeof m.user === 'object' && m.user !== null ? (m.user as { _id: string })._id === user?._id : m.user === user?._id
   );
   const isWorkspaceAdminOrFacilitator = isWorkspaceOwner || (memberRecord && ['workspace_admin', 'facilitator'].includes(memberRecord.role));
   

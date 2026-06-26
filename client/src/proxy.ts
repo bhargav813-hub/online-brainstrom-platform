@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 const publicPaths = ['/', '/login', '/register', '/verify-otp', '/forgot-password', '/reset-password'];
 const sharedPathPrefix = '/shared/';
 
-export function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Allow public pages and shared board viewer

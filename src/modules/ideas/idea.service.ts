@@ -25,7 +25,7 @@ export class IdeaService {
   ) {
     let path = '';
     let depth = 0;
-    let position = 0;
+    let position: number;
 
     // If this is a child idea, compute path from parent
     if (data.parentIdeaId) {

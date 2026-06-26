@@ -28,3 +28,12 @@ export interface UpdateBoardPayload {
 }
 
 export type ExportFormat = 'pdf' | 'json';
+
+import type { Session } from './session.types';
+import type { Idea } from './idea.types';
+
+export interface SharedBoardResponse {
+  board: Board;
+  sessions: Session[];
+  ideas: Idea[];
+}

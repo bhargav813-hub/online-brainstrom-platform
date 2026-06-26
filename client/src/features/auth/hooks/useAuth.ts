@@ -23,6 +23,9 @@ export function useLogin() {
       toast.success('Welcome back!');
       router.push(ROUTES.WORKSPACES);
     },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to sign in');
+    },
   });
 }
 
@@ -34,6 +37,9 @@ export function useRegister() {
     onSuccess: (_, variables) => {
       toast.success('Account created! Please verify your email.');
       router.push(`${ROUTES.VERIFY_OTP}?email=${encodeURIComponent(variables.email)}`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Registration failed');
     },
   });
 }
@@ -52,6 +58,9 @@ export function useVerifyOtp() {
       toast.success('Email verified! Welcome aboard.');
       router.push(ROUTES.WORKSPACES);
     },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Verification failed');
+    },
   });
 }
 
@@ -64,6 +73,9 @@ export function useForgotPassword() {
       toast.success('Reset code sent to your email');
       router.push(`${ROUTES.RESET_PASSWORD}?email=${encodeURIComponent(variables.email)}`);
     },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to send reset code');
+    },
   });
 }
 
@@ -75,6 +87,9 @@ export function useResetPassword() {
     onSuccess: () => {
       toast.success('Password reset successfully!');
       router.push(ROUTES.LOGIN);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to reset password');
     },
   });
 }
