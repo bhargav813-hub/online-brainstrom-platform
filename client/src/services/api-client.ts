@@ -30,7 +30,7 @@ function normalizeError(error: AxiosError): ApiError {
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
-  timeout: 15000,
+  timeout: 60000, // Increased to 60s to allow Render backend time to wake up
   headers: { 'Content-Type': 'application/json' },
 });
 

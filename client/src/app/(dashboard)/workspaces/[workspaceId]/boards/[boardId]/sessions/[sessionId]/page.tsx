@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect } from 'react';
+import { use, useEffect, useRef } from 'react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { useSession, useJoinSession, useLeaveSession, useUpdateSession } from '@/features/sessions/hooks/useSession';
 import { useIdeaHierarchy, useDeleteIdea } from '@/features/ideas/hooks/useIdeas';
@@ -40,16 +40,23 @@ export default function SessionPage({ params }: { params: Promise<{ workspaceId:
   const socket = useSocket();
   const { user } = useAuthStore();
 
+  const hasJoined = useRef(false);
+
   // Join session on mount, leave on unmount
   useEffect(() => {
-    joinSession.mutate(sessionId);
-    socket?.emit('session:join', { sessionId });
+    if (!hasJoined.current) {
+      hasJoined.current = true;
+      joinSession.mutate(sessionId);
+      socket?.emit('session:join', { sessionId });
+    }
 
     return () => {
-      leaveSession.mutate(sessionId);
+      // We rely on socket disconnect to mark the user as left on the backend 
+      // instead of hitting the REST API on every React StrictMode unmount.
       socket?.emit('session:leave', { sessionId });
+      hasJoined.current = false;
     };
-  }, [sessionId, joinSession, leaveSession, socket]);
+  }, [sessionId, socket]);
 
   // Socket event listeners for real-time updates
   useEffect(() => {
