@@ -1,24 +1,7 @@
 import nodemailer from 'nodemailer';
 import { env } from '../config/env';
 import { logger } from '../config/logger';
-import dns from 'dns';
-
-// Force Node.js to prefer IPv4 over IPv6 when resolving hostnames
-if (dns.setDefaultResultOrder) {
-  dns.setDefaultResultOrder('ipv4first');
-}
-
-// @ts-ignore
-const transporter = nodemailer.createTransport({
-  host: env.SMTP_HOST,
-  port: env.SMTP_PORT,
-  secure: env.SMTP_PORT === 465,
-  family: 4, // Force IPv4 resolution to fix ENETUNREACH IPv6 errors
-  auth: {
-    user: env.SMTP_USER,
-    pass: env.SMTP_PASS,
-  },
-} as any);
+import dns from 'dns/promises';
 
 /**
  * Reusable email sender utility.
@@ -38,15 +21,35 @@ export const sendEmail = async (options: {
     return { messageId: 'mock-id' };
   }
 
-  const mailOptions = {
-    from: env.SMTP_FROM || `"Brainstorm Platform" <${env.SMTP_USER}>`,
-    to: options.to,
-    subject: options.subject,
-    text: options.text,
-    html: options.html,
-  };
-
   try {
+    // 1. Manually resolve the IPv4 address of the SMTP host to bypass IPv6 ENETUNREACH completely
+    const lookupResult = await dns.lookup(env.SMTP_HOST, { family: 4 });
+    const ipv4Address = lookupResult.address;
+
+    // 2. Create transporter using the explicit IPv4 address
+    // @ts-ignore
+    const transporter = nodemailer.createTransport({
+      host: ipv4Address,
+      port: env.SMTP_PORT,
+      secure: env.SMTP_PORT === 465,
+      auth: {
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASS,
+      },
+      tls: {
+        // We MUST pass the original hostname so Google's TLS certificate validation doesn't fail against the IP address
+        servername: env.SMTP_HOST
+      }
+    } as any);
+
+    const mailOptions = {
+      from: env.SMTP_FROM || `"Brainstorm Platform" <${env.SMTP_USER}>`,
+      to: options.to,
+      subject: options.subject,
+      text: options.text,
+      html: options.html,
+    };
+
     const info = await transporter.sendMail(mailOptions);
     logger.info(`Email successfully sent to ${options.to}. MessageId: ${info.messageId}`);
     return info;
