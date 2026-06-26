@@ -1,6 +1,12 @@
 import nodemailer from 'nodemailer';
 import { env } from '../config/env';
 import { logger } from '../config/logger';
+import dns from 'dns';
+
+// Force Node.js to prefer IPv4 over IPv6 when resolving hostnames
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
 
 // @ts-ignore
 const transporter = nodemailer.createTransport({
