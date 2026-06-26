@@ -2,15 +2,17 @@ import nodemailer from 'nodemailer';
 import { env } from '../config/env';
 import { logger } from '../config/logger';
 
+// @ts-ignore
 const transporter = nodemailer.createTransport({
   host: env.SMTP_HOST,
   port: env.SMTP_PORT,
   secure: env.SMTP_PORT === 465,
+  family: 4, // Force IPv4 resolution to fix ENETUNREACH IPv6 errors
   auth: {
     user: env.SMTP_USER,
     pass: env.SMTP_PASS,
   },
-});
+} as any);
 
 /**
  * Reusable email sender utility.
