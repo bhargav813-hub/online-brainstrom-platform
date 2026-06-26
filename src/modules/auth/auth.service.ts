@@ -4,6 +4,7 @@ import { env } from '../../config/env';
 import { ApiError } from '../../utils/apiError';
 import { TokenPayload, UserRole } from '../../types';
 import { sendEmail } from '../../utils/email';
+import { logger } from '../../config/logger';
 
 /**
  * Authentication Service
@@ -32,11 +33,11 @@ export class AuthService {
       existingUser.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
       await existingUser.save();
 
-      await sendEmail({
+      sendEmail({
         to: existingUser.email,
         subject: 'Email Verification OTP',
         text: `Your email verification OTP is: ${otp}. It will expire in 10 minutes.`,
-      });
+      }).catch((err) => logger.error('Background email failed:', err));
 
       return {
         email: existingUser.email,
@@ -55,11 +56,11 @@ export class AuthService {
       otpExpires: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
     });
 
-    await sendEmail({
+    sendEmail({
       to: user.email,
       subject: 'Email Verification OTP',
       text: `Welcome to Brainstorm Platform! Your email verification OTP is: ${otp}. It will expire in 10 minutes.`,
-    });
+    }).catch((err) => logger.error('Background email failed:', err));
 
     return {
       email: user.email,
@@ -171,11 +172,11 @@ export class AuthService {
     user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     await user.save();
 
-    await sendEmail({
+    sendEmail({
       to: user.email,
       subject: 'Password Reset OTP',
       text: `You requested a password reset. Your OTP is: ${otp}. It will expire in 10 minutes.`,
-    });
+    }).catch((err) => logger.error('Background email failed:', err));
 
     return { message: 'Password reset OTP sent to your email' };
   }
