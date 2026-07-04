@@ -3,7 +3,7 @@ import { AuthController } from './auth.controller';
 import { validate } from '../../middleware/validate.middleware';
 import { authenticate } from '../../middleware/auth.middleware';
 import { authLimiter } from '../../middleware/rateLimiter.middleware';
-import { registerSchema, loginSchema, refreshTokenSchema, verifyOtpSchema, forgotPasswordSchema, resetPasswordSchema } from './auth.validators';
+import { registerSchema, loginSchema, refreshTokenSchema, verifyOtpSchema, forgotPasswordSchema, resetPasswordSchema, verifyResetOtpSchema } from './auth.validators';
 
 const router = Router();
 
@@ -13,7 +13,8 @@ const router = Router();
  * POST /api/auth/verify-otp     — Verify email using registration OTP
  * POST /api/auth/login          — Login
  * POST /api/auth/forgot-password — Request password reset OTP
- * POST /api/auth/reset-password  — Reset password using OTP
+ * POST /api/auth/verify-reset-otp — Verify password reset OTP
+ * POST /api/auth/reset-password  — Reset password using auth key
  * POST /api/auth/refresh-token  — Refresh access token
  * POST /api/auth/logout         — Logout (requires auth)
  */
@@ -22,6 +23,7 @@ router.post('/register', authLimiter, validate(registerSchema), AuthController.r
 router.post('/verify-otp', authLimiter, validate(verifyOtpSchema), AuthController.verifyOtp);
 router.post('/login', authLimiter, validate(loginSchema), AuthController.login);
 router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), AuthController.forgotPassword);
+router.post('/verify-reset-otp', authLimiter, validate(verifyResetOtpSchema), AuthController.verifyResetOtp);
 router.post('/reset-password', authLimiter, validate(resetPasswordSchema), AuthController.resetPassword);
 router.post('/refresh-token', validate(refreshTokenSchema), AuthController.refreshToken);
 router.post('/logout', authenticate, AuthController.logout);

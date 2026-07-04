@@ -31,9 +31,13 @@ export const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email format'),
 });
 
-export const resetPasswordSchema = z.object({
+export const verifyResetOtpSchema = z.object({
   email: z.string().email('Invalid email format'),
   otp: z.string().length(6, 'OTP must be exactly 6 characters'),
+});
+
+export const resetPasswordSchema = z.object({
+  email: z.string().email('Invalid email format'),
   password: z
     .string()
     .min(6, 'Password must be at least 6 characters')

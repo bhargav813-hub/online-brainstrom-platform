@@ -32,6 +32,12 @@ export class AuthController {
     ApiResponse.success(res, result, 'Password reset OTP sent to your email');
   });
 
+  /** POST /api/auth/verify-reset-otp */
+  static verifyResetOtp = asyncHandler(async (req: Request, res: Response) => {
+    const result = await AuthService.verifyResetOtp(req.body);
+    ApiResponse.success(res, result, 'Reset OTP verified');
+  });
+
   /** POST /api/auth/reset-password */
   static resetPassword = asyncHandler(async (req: Request, res: Response) => {
     const result = await AuthService.resetPassword(req.body);

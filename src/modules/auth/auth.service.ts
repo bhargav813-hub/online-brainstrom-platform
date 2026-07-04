@@ -5,6 +5,8 @@ import { ApiError } from '../../utils/apiError';
 import { TokenPayload, UserRole } from '../../types';
 import { sendEmail } from '../../utils/email';
 import { logger } from '../../config/logger';
+import redisClient from '../../config/redis';
+import bcrypt from 'bcrypt';
 
 /**
  * Authentication Service
@@ -17,53 +19,39 @@ export class AuthService {
    * Generates and emails a 6-digit verification OTP.
    */
   static async register(data: { name: string; email: string; password: string }) {
+    const limitKey = `otp-limit:signup:${data.email}`;
+    const isLimited = await redisClient.get(limitKey);
+    if (isLimited) {
+      throw ApiError.tooManyRequests('Please wait 60 seconds before requesting a new OTP');
+    }
+
     // Check if email already exists
     const existingUser = await User.findOne({ email: data.email });
     
     if (existingUser) {
-      if (existingUser.isVerified) {
-        throw ApiError.conflict('Email already registered');
-      }
-
-      // If existing user is unverified, overwrite their registration details
-      existingUser.name = data.name;
-      existingUser.password = data.password; // pre-save hook will hash this
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      existingUser.otp = otp;
-      existingUser.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-      await existingUser.save();
-
-      sendEmail({
-        to: existingUser.email,
-        subject: 'Email Verification OTP',
-        text: `Your email verification OTP is: ${otp}. It will expire in 10 minutes.`,
-      }).catch((err) => logger.error('Background email failed:', err));
-
-      return {
-        email: existingUser.email,
-        message: 'Verification OTP sent to your email',
-      };
+      throw ApiError.conflict('Email already registered');
     }
 
+    const hashedPassword = await bcrypt.hash(data.password, 12);
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    const user = await User.create({
+    await redisClient.setEx(`signup:${data.email}`, 600, JSON.stringify({
       name: data.name,
       email: data.email,
-      password: data.password,
-      isVerified: false,
+      password: hashedPassword,
       otp,
-      otpExpires: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
-    });
+    }));
+
+    await redisClient.setEx(limitKey, 60, '1');
 
     sendEmail({
-      to: user.email,
+      to: data.email,
       subject: 'Email Verification OTP',
       text: `Welcome to Brainstorm Platform! Your email verification OTP is: ${otp}. It will expire in 10 minutes.`,
     }).catch((err) => logger.error('Background email failed:', err));
 
     return {
-      email: user.email,
+      email: data.email,
       message: 'Verification OTP sent to your email',
     };
   }
@@ -119,24 +107,28 @@ export class AuthService {
    * Activates user and issues access/refresh tokens.
    */
   static async verifyOtp(data: { email: string; otp: string }) {
-    const user = await User.findOne({ email: data.email }).select('+otp +otpExpires');
-    if (!user) {
-      throw ApiError.notFound('User not found');
+    const signupKey = `signup:${data.email}`;
+    const signupDataStr = await redisClient.get(signupKey);
+
+    if (!signupDataStr) {
+      throw ApiError.badRequest('OTP expired. Please sign up again.');
     }
 
-    if (user.isVerified) {
-      throw ApiError.badRequest('User is already verified');
+    const signupData = JSON.parse(signupDataStr);
+
+    if (signupData.otp !== data.otp) {
+      throw ApiError.badRequest('Invalid OTP');
     }
 
-    if (!user.otp || !user.otpExpires || user.otp !== data.otp || user.otpExpires.getTime() < Date.now()) {
-      throw ApiError.badRequest('Invalid or expired OTP');
-    }
+    // Create user in MongoDB
+    const user = await User.create({
+      name: signupData.name,
+      email: signupData.email,
+      password: signupData.password, // already hashed
+      isVerified: true,
+    });
 
-    // Mark as verified and clear OTP fields
-    user.isVerified = true;
-    user.otp = undefined;
-    user.otpExpires = undefined;
-    await user.save();
+    await redisClient.del(signupKey);
 
     // Generate tokens
     const tokens = this.generateTokens({
@@ -162,15 +154,25 @@ export class AuthService {
    * Send a password reset OTP.
    */
   static async forgotPassword(email: string) {
+    const limitKey = `otp-limit:reset:${email}`;
+    const isLimited = await redisClient.get(limitKey);
+    if (isLimited) {
+      throw ApiError.tooManyRequests('Please wait 60 seconds before requesting a new OTP');
+    }
+
     const user = await User.findOne({ email });
     if (!user) {
       throw ApiError.notFound('User with this email not found');
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    user.otp = otp;
-    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-    await user.save();
+    
+    await redisClient.setEx(`reset:${email}`, 600, JSON.stringify({
+      email,
+      otp,
+    }));
+
+    await redisClient.setEx(limitKey, 60, '1');
 
     sendEmail({
       to: user.email,
@@ -182,23 +184,47 @@ export class AuthService {
   }
 
   /**
+   * Verify forgot password OTP
+   */
+  static async verifyResetOtp(data: { email: string; otp: string }) {
+    const resetKey = `reset:${data.email}`;
+    const resetDataStr = await redisClient.get(resetKey);
+
+    if (!resetDataStr) {
+      throw ApiError.badRequest('OTP expired.');
+    }
+
+    const resetData = JSON.parse(resetDataStr);
+
+    if (resetData.otp !== data.otp) {
+      throw ApiError.badRequest('Invalid OTP');
+    }
+
+    await redisClient.del(resetKey);
+    await redisClient.setEx(`reset-auth:${data.email}`, 600, 'verified');
+
+    return { message: 'OTP verified successfully. You can now reset your password.' };
+  }
+
+  /**
    * Reset password using reset OTP.
    */
-  static async resetPassword(data: { email: string; otp: string; password: string }) {
-    const user = await User.findOne({ email: data.email }).select('+otp +otpExpires');
+  static async resetPassword(data: { email: string; password: string }) {
+    const authKey = `reset-auth:${data.email}`;
+    const isAuth = await redisClient.get(authKey);
+
+    if (!isAuth) {
+      throw ApiError.unauthorized('OTP verification required.');
+    }
+
+    const user = await User.findOne({ email: data.email });
     if (!user) {
       throw ApiError.notFound('User not found');
     }
 
-    if (!user.otp || !user.otpExpires || user.otp !== data.otp || user.otpExpires.getTime() < Date.now()) {
-      throw ApiError.badRequest('Invalid or expired reset OTP');
-    }
-
-    // Update password (pre-save hashes it) and clear OTP
-    user.password = data.password;
-    user.otp = undefined;
-    user.otpExpires = undefined;
+    user.password = await bcrypt.hash(data.password, 12);
     await user.save();
+    await redisClient.del(authKey);
 
     return { message: 'Password reset successful. You can now login with your new password.' };
   }
