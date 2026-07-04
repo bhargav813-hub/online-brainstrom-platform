@@ -30,6 +30,11 @@ export const authService = {
     return data;
   },
 
+  verifyResetOtp: async (payload: VerifyOtpPayload) => {
+    const { data } = await apiClient.post<ApiResponse<null>>('/auth/verify-reset-otp', payload);
+    return data;
+  },
+
   resetPassword: async (payload: ResetPasswordPayload) => {
     const { data } = await apiClient.post<ApiResponse<null>>('/auth/reset-password', payload);
     return data;
