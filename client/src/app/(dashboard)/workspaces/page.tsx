@@ -8,6 +8,7 @@ import { PageLoader } from '@/components/feedback/LoadingSpinner';
 import { ErrorMessage } from '@/components/feedback/ErrorMessage';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { FolderKanban } from 'lucide-react';
+import { QuickIdeaDump } from '@/features/ideas/components/QuickIdeaDump';
 
 export default function WorkspacesPage() {
   const { data: workspaces, isLoading, error, refetch } = useWorkspaces();
@@ -35,6 +36,8 @@ export default function WorkspacesPage() {
           ))}
         </div>
       )}
+      
+      <QuickIdeaDump />
     </PageContainer>
   );
 }

@@ -1,7 +1,12 @@
+'use client';
+
 import Link from 'next/link';
 import { Zap, Lightbulb, Users, BarChart3, Layers, Shield, ArrowRight, Sparkles, Globe } from 'lucide-react';
+import { useAuthStore } from '@/store/auth.store';
 
 export default function LandingPage() {
+  const { isAuthenticated, isLoading } = useAuthStore();
+
   const features = [
     {
       icon: Lightbulb,
@@ -55,19 +60,33 @@ export default function LandingPage() {
             </span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/register"
-              className="inline-flex h-9 items-center justify-center rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-4 text-sm font-medium text-white shadow-lg shadow-violet-500/25 transition-all hover:from-violet-700 hover:to-indigo-700 hover:shadow-xl"
-            >
-              Get Started
-              <ArrowRight className="ml-1.5 h-4 w-4" />
-            </Link>
+            {isLoading ? (
+              <div className="h-9 w-24 animate-pulse rounded-lg bg-muted/50"></div>
+            ) : isAuthenticated ? (
+              <Link
+                href="/workspaces"
+                className="inline-flex h-9 items-center justify-center rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-4 text-sm font-medium text-white shadow-lg shadow-violet-500/25 transition-all hover:from-violet-700 hover:to-indigo-700 hover:shadow-xl"
+              >
+                Go to Dashboard
+                <ArrowRight className="ml-1.5 h-4 w-4" />
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/register"
+                  className="inline-flex h-9 items-center justify-center rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-4 text-sm font-medium text-white shadow-lg shadow-violet-500/25 transition-all hover:from-violet-700 hover:to-indigo-700 hover:shadow-xl"
+                >
+                  Get Started
+                  <ArrowRight className="ml-1.5 h-4 w-4" />
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -95,19 +114,33 @@ export default function LandingPage() {
               Build hierarchical idea trees, see live collaboration, and let the best ideas rise to the top.
             </p>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <Link
-                href="/register"
-                className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-8 text-base font-semibold text-white shadow-xl shadow-violet-500/25 transition-all hover:from-violet-700 hover:to-indigo-700 hover:shadow-2xl hover:-translate-y-0.5"
-              >
-                Start Brainstorming Free
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-              <Link
-                href="/login"
-                className="inline-flex h-12 items-center justify-center rounded-xl border px-8 text-base font-semibold transition-all hover:bg-muted hover:-translate-y-0.5"
-              >
-                Sign in to your workspace
-              </Link>
+              {isLoading ? (
+                <div className="h-12 w-48 animate-pulse rounded-xl bg-muted/50"></div>
+              ) : isAuthenticated ? (
+                <Link
+                  href="/workspaces"
+                  className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-8 text-base font-semibold text-white shadow-xl shadow-violet-500/25 transition-all hover:from-violet-700 hover:to-indigo-700 hover:shadow-2xl hover:-translate-y-0.5"
+                >
+                  Go to Dashboard
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/register"
+                    className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-8 text-base font-semibold text-white shadow-xl shadow-violet-500/25 transition-all hover:from-violet-700 hover:to-indigo-700 hover:shadow-2xl hover:-translate-y-0.5"
+                  >
+                    Start Brainstorming Free
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="inline-flex h-12 items-center justify-center rounded-xl border px-8 text-base font-semibold transition-all hover:bg-muted hover:-translate-y-0.5"
+                  >
+                    Sign in to your workspace
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -189,13 +222,25 @@ export default function LandingPage() {
               <p className="mx-auto mt-4 max-w-xl text-lg text-white/80">
                 Join teams already using Brainstorm Platform to turn ideas into structured, actionable outcomes.
               </p>
-              <Link
-                href="/register"
-                className="mt-8 inline-flex h-12 items-center justify-center rounded-xl bg-white px-8 text-base font-semibold text-violet-700 shadow-xl transition-all hover:bg-white/90 hover:-translate-y-0.5"
-              >
-                Create Free Account
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
+              {isLoading ? (
+                <div className="mt-8 mx-auto h-12 w-48 animate-pulse rounded-xl bg-white/20"></div>
+              ) : isAuthenticated ? (
+                <Link
+                  href="/workspaces"
+                  className="mt-8 inline-flex h-12 items-center justify-center rounded-xl bg-white px-8 text-base font-semibold text-violet-700 shadow-xl transition-all hover:bg-white/90 hover:-translate-y-0.5"
+                >
+                  Go to Dashboard
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              ) : (
+                <Link
+                  href="/register"
+                  className="mt-8 inline-flex h-12 items-center justify-center rounded-xl bg-white px-8 text-base font-semibold text-violet-700 shadow-xl transition-all hover:bg-white/90 hover:-translate-y-0.5"
+                >
+                  Create Free Account
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              )}
             </div>
           </div>
         </div>
