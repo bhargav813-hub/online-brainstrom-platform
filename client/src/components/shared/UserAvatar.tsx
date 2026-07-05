@@ -20,7 +20,7 @@ const sizeClasses = {
 export function UserAvatar({ name, avatar, className, size = 'md' }: UserAvatarProps) {
   return (
     <Avatar className={cn(sizeClasses[size], className)}>
-      <AvatarImage src={avatar} alt={name} />
+      <AvatarImage src={avatar || undefined} alt={name} />
       <AvatarFallback className="bg-gradient-to-br from-primary/80 to-primary text-primary-foreground font-medium">
         {getInitials(name)}
       </AvatarFallback>

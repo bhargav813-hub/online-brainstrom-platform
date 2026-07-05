@@ -11,6 +11,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   avatar?: string;
+  avatarPublicId?: string;
   isActive: boolean;
   isVerified: boolean;
 
@@ -43,6 +44,10 @@ const userSchema = new Schema<IUser>(
       select: false, // Exclude from queries by default
     },
     avatar: {
+      type: String,
+      default: '',
+    },
+    avatarPublicId: {
       type: String,
       default: '',
     },

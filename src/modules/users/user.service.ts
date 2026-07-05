@@ -1,5 +1,6 @@
 import { User } from './user.model';
 import { ApiError } from '../../utils/apiError';
+import { CloudinaryService } from '../../services/cloudinary.service';
 
 /**
  * User Service — profile management.
@@ -44,5 +45,41 @@ export class UserService {
 
     user.password = data.newPassword;
     await user.save();
+  }
+
+  /** Upload user avatar. */
+  static async uploadAvatar(userId: string, fileBuffer: Buffer) {
+    const user = await User.findById(userId);
+    if (!user) throw ApiError.notFound('User not found');
+
+    // If user already has an avatar in Cloudinary, delete it first
+    if (user.avatarPublicId) {
+      await CloudinaryService.deleteImage(user.avatarPublicId);
+    }
+
+    // Upload new image
+    const { secure_url, public_id } = await CloudinaryService.uploadImage(fileBuffer);
+
+    user.avatar = secure_url;
+    user.avatarPublicId = public_id;
+    await user.save();
+
+    return user;
+  }
+
+  /** Delete user avatar. */
+  static async deleteAvatar(userId: string) {
+    const user = await User.findById(userId);
+    if (!user) throw ApiError.notFound('User not found');
+
+    if (user.avatarPublicId) {
+      await CloudinaryService.deleteImage(user.avatarPublicId);
+    }
+
+    user.avatar = '';
+    user.avatarPublicId = '';
+    await user.save();
+
+    return user;
   }
 }

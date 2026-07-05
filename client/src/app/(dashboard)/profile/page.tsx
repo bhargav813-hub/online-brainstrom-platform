@@ -7,7 +7,7 @@ import { PageContainer } from '@/components/layout/PageContainer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/forms/FormField';
-import { UserAvatar } from '@/components/shared/UserAvatar';
+import { AvatarUpload } from '@/components/shared/AvatarUpload';
 import { useAuthStore } from '@/store/auth.store';
 import { userService } from '@/services/user.service';
 import { useMutation } from '@tanstack/react-query';
@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
 
-const profileSchema = z.object({ name: z.string().min(2).max(50), avatar: z.string().url().optional().or(z.literal('')) });
+const profileSchema = z.object({ name: z.string().min(2).max(50) });
 const passwordSchema = z.object({ currentPassword: z.string().min(6), newPassword: z.string().min(6), confirmPassword: z.string() }).refine((d) => d.newPassword === d.confirmPassword, { message: 'Passwords must match', path: ['confirmPassword'] });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -24,7 +24,7 @@ type PasswordFormData = z.infer<typeof passwordSchema>;
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
 
-  const profileForm = useForm<ProfileFormData>({ resolver: zodResolver(profileSchema), defaultValues: { name: user?.name || '', avatar: user?.avatar || '' } });
+  const profileForm = useForm<ProfileFormData>({ resolver: zodResolver(profileSchema), defaultValues: { name: user?.name || '' } });
   const passwordForm = useForm<PasswordFormData>({ resolver: zodResolver(passwordSchema) });
 
   const updateProfile = useMutation({
@@ -43,13 +43,20 @@ export default function ProfilePage() {
         <Card>
           <CardHeader><CardTitle>Profile Information</CardTitle></CardHeader>
           <CardContent>
-            <div className="mb-6 flex items-center gap-4">
-              <UserAvatar name={user?.name || 'User'} avatar={user?.avatar} size="lg" />
-              <div><p className="font-medium">{user?.name}</p><p className="text-sm text-muted-foreground">{user?.email}</p></div>
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-6">
+              <AvatarUpload 
+                name={user?.name || 'User'} 
+                currentAvatar={user?.avatar} 
+                onUploadSuccess={(newAvatar) => user && setUser({ ...user, avatar: newAvatar })}
+                onDeleteSuccess={() => user && setUser({ ...user, avatar: '' })}
+              />
+              <div>
+                <p className="font-medium text-lg">{user?.name}</p>
+                <p className="text-sm text-muted-foreground">{user?.email}</p>
+              </div>
             </div>
             <form onSubmit={profileForm.handleSubmit((d) => updateProfile.mutate(d))} className="space-y-4">
               <FormField id="profile-name" label="Name" error={profileForm.formState.errors.name} register={profileForm.register('name')} />
-              <FormField id="profile-avatar" label="Avatar URL" placeholder="https://..." error={profileForm.formState.errors.avatar} register={profileForm.register('avatar')} />
               <Button type="submit" disabled={updateProfile.isPending}>
                 {updateProfile.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Save Changes
               </Button>
