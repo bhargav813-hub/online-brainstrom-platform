@@ -57,7 +57,7 @@ export class SessionService {
       targetId: session._id,
     });
 
-    return session.populate('facilitator', 'name email');
+    return session.populate('facilitator', 'name email avatar');
   }
 
   /** Get all sessions for a board with pagination. */
@@ -67,7 +67,7 @@ export class SessionService {
 
     const [sessions, total] = await Promise.all([
       Session.find(filter)
-        .populate('facilitator', 'name email')
+        .populate('facilitator', 'name email avatar')
         .sort({ createdAt: -1 })
         .skip(pagination.skip)
         .limit(pagination.limit),
@@ -80,7 +80,7 @@ export class SessionService {
   /** Get session by ID with participant details. */
   static async getById(sessionId: string) {
     const session = await Session.findById(sessionId)
-      .populate('facilitator', 'name email')
+      .populate('facilitator', 'name email avatar')
       .populate('board', 'title')
       .populate('workspace', 'name');
 
@@ -127,7 +127,7 @@ export class SessionService {
     const updated = await Session.findByIdAndUpdate(sessionId, data, {
       new: true,
       runValidators: true,
-    }).populate('facilitator', 'name email');
+    }).populate('facilitator', 'name email avatar');
 
     return updated;
   }

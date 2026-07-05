@@ -28,7 +28,7 @@ export class ActivityService {
 
     const [activities, total] = await Promise.all([
       ActivityLog.find(filter)
-        .populate('user', 'name email')
+        .populate('user', 'name email avatar')
         .sort({ createdAt: -1 })
         .skip(pagination.skip)
         .limit(pagination.limit),

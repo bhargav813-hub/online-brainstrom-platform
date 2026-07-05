@@ -96,7 +96,7 @@ export class VoteService {
       Idea.find({ session: sessionId, isDeleted: false })
         .sort({ upvoteCount: -1 })
         .limit(10)
-        .populate('author', 'name email')
+        .populate('author', 'name email avatar')
         .select('title upvoteCount downvoteCount'),
     ]);
 
@@ -127,7 +127,7 @@ export class VoteService {
 
   /** Get votes for a specific idea. */
   static async getVotesForIdea(ideaId: string) {
-    return Vote.find({ idea: ideaId }).populate('user', 'name email');
+    return Vote.find({ idea: ideaId }).populate('user', 'name email avatar');
   }
 
   /** Recalculate and update vote counts on an idea. */

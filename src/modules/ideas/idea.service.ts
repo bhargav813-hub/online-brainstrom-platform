@@ -89,7 +89,7 @@ export class IdeaService {
       metadata: { title: idea.title, parentIdea: data.parentIdeaId },
     });
 
-    return idea.populate('author', 'name email');
+    return idea.populate('author', 'name email avatar');
   }
 
   /**
@@ -131,7 +131,7 @@ export class IdeaService {
       metadata: { version: idea.currentVersion },
     });
 
-    return idea.populate('author', 'name email');
+    return idea.populate('author', 'name email avatar');
   }
 
   /**
@@ -231,7 +231,7 @@ export class IdeaService {
    */
   static async getHierarchy(sessionId: string) {
     const ideas = await Idea.find({ session: sessionId, isDeleted: false })
-      .populate('author', 'name email')
+      .populate('author', 'name email avatar')
       .sort({ depth: 1, position: 1 });
 
     return ideas;
@@ -242,7 +242,7 @@ export class IdeaService {
    */
   static async getChildren(ideaId: string) {
     return Idea.find({ parentIdea: ideaId, isDeleted: false })
-      .populate('author', 'name email')
+      .populate('author', 'name email avatar')
       .sort({ position: 1 });
   }
 
@@ -251,7 +251,7 @@ export class IdeaService {
    */
   static async getVersionHistory(ideaId: string) {
     return IdeaVersion.find({ idea: ideaId })
-      .populate('editedBy', 'name email')
+      .populate('editedBy', 'name email avatar')
       .sort({ version: -1 });
   }
 
@@ -308,7 +308,7 @@ export class IdeaService {
 
     const [ideas, total] = await Promise.all([
       Idea.find(filter)
-        .populate('author', 'name email')
+        .populate('author', 'name email avatar')
         .sort({ createdAt: -1 })
         .skip(pagination.skip)
         .limit(pagination.limit),

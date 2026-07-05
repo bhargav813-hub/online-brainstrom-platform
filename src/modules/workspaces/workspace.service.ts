@@ -15,7 +15,7 @@ export class WorkspaceService {
       owner: userId,
       members: [{ user: userId, role: UserRole.WORKSPACE_ADMIN, joinedAt: new Date() }],
     });
-    return workspace.populate('owner', 'name email');
+    return workspace.populate('owner', 'name email avatar');
   }
 
   /** Get all workspaces for a user (as owner or member). */
@@ -24,16 +24,16 @@ export class WorkspaceService {
       $or: [{ owner: userId }, { 'members.user': userId }],
       isActive: true,
     })
-      .populate('owner', 'name email')
-      .populate('members.user', 'name email')
+      .populate('owner', 'name email avatar')
+      .populate('members.user', 'name email avatar')
       .sort({ updatedAt: -1 });
   }
 
   /** Get workspace by ID with member details. */
   static async getById(workspaceId: string) {
     const workspace = await Workspace.findById(workspaceId)
-      .populate('owner', 'name email')
-      .populate('members.user', 'name email');
+      .populate('owner', 'name email avatar')
+      .populate('members.user', 'name email avatar');
 
     if (!workspace) throw ApiError.notFound('Workspace not found');
     return workspace;
@@ -68,7 +68,7 @@ export class WorkspaceService {
     workspace.members.push({ user: user._id as any, role, joinedAt: new Date() });
     await workspace.save();
 
-    return workspace.populate('members.user', 'name email');
+    return workspace.populate('members.user', 'name email avatar');
   }
 
   /** Assign/change role for an existing member. */
@@ -82,7 +82,7 @@ export class WorkspaceService {
     member.role = role;
     await workspace.save();
 
-    return workspace.populate('members.user', 'name email');
+    return workspace.populate('members.user', 'name email avatar');
   }
 
   /** Remove a member from the workspace. */

@@ -47,7 +47,7 @@ export class ClusterService {
   static async getBySession(sessionId: string) {
     return Cluster.find({ session: sessionId })
       .populate('ideas', 'title content tags upvoteCount')
-      .populate('createdBy', 'name email')
+      .populate('createdBy', 'name email avatar')
       .sort({ createdAt: -1 });
   }
 
