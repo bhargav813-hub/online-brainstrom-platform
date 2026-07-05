@@ -80,7 +80,7 @@ export function IdeaFilterBar({ ideas, onFilterChange }: IdeaFilterBarProps) {
       </div>
 
       <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-        <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+        <Select value={sortBy} onValueChange={(v) => setSortBy((v as IdeaFilterState['sortBy']) || 'none')}>
           <SelectTrigger className="w-[140px] bg-background">
             <Filter className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
             <SelectValue placeholder="Sort by" />
@@ -94,7 +94,7 @@ export function IdeaFilterBar({ ideas, onFilterChange }: IdeaFilterBarProps) {
         </Select>
 
         {tags.length > 0 && (
-          <Select value={tag} onValueChange={setTag}>
+          <Select value={tag} onValueChange={(v) => setTag(v || 'all')}>
             <SelectTrigger className="w-[120px] bg-background">
               <SelectValue placeholder="All Tags" />
             </SelectTrigger>
@@ -108,7 +108,7 @@ export function IdeaFilterBar({ ideas, onFilterChange }: IdeaFilterBarProps) {
         )}
 
         {authors.length > 0 && (
-          <Select value={authorId} onValueChange={setAuthorId}>
+          <Select value={authorId} onValueChange={(v) => setAuthorId(v || 'all')}>
             <SelectTrigger className="w-[130px] bg-background">
               <SelectValue placeholder="All Members" />
             </SelectTrigger>
