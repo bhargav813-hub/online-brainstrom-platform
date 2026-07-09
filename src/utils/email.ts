@@ -43,7 +43,7 @@ export const sendEmail = async (options: {
     } as any);
 
     const mailOptions = {
-      from: env.SMTP_FROM || `"Brainstorm Platform" <${env.SMTP_USER}>`,
+      from: env.SMTP_FROM || `"Sovereign Brainstorming Platform" <${env.SMTP_USER}>`,
       to: options.to,
       subject: options.subject,
       text: options.text,
@@ -58,3 +58,4 @@ export const sendEmail = async (options: {
     throw error;
   }
 };
+

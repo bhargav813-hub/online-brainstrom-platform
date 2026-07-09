@@ -49,7 +49,7 @@ export default function SharedBoardPage({ params }: { params: Promise<{ shareTok
         <div className="mx-auto flex h-16 max-w-5xl items-center gap-4 px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600">
-              <Zap className="h-4 w-4 text-white" />
+              <img src="/logo.png" alt="Logo" className="h-4 w-4" />
             </div>
             <span className="font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
               Brainstorm

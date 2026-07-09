@@ -47,7 +47,7 @@ export class AuthService {
     sendEmail({
       to: data.email,
       subject: 'Email Verification OTP',
-      text: `Welcome to Brainstorm Platform! Your email verification OTP is: ${otp}. It will expire in 10 minutes.`,
+      text: `Welcome to Sovereign Brainstorming Platform! Your email verification OTP is: ${otp}. It will expire in 10 minutes.`,
     }).catch((err) => logger.error('Background email failed:', err));
 
     return {
@@ -290,3 +290,4 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 }
+

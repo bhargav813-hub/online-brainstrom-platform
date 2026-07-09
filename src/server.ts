@@ -30,7 +30,7 @@ const startServer = async () => {
     httpServer.listen(env.PORT, () => {
       logger.info(`
   ╔════════════════════════════════════════════════════╗
-  ║   Brainstorm Platform API Server                   ║
+  ║   Sovereign Brainstorming Platform API Server                   ║
   ║   Environment: ${env.NODE_ENV.padEnd(35)}║
   ║   Port:        ${String(env.PORT).padEnd(35)}║
   ║   API:         http://localhost:${env.PORT}/api${' '.repeat(14)}║
@@ -59,3 +59,4 @@ const startServer = async () => {
 };
 
 startServer();
+

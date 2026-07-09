@@ -51,11 +51,13 @@ export default function LandingPage() {
       {/* Navigation */}
       <nav className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/25">
-              <Zap className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-lg font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <img
+              src="/logo.png"
+              alt="Brainstorm Logo"
+              className="h-10 w-10 rounded-xl shadow-lg shadow-teal-500/20 transition-all group-hover:shadow-teal-500/40 group-hover:scale-105"
+            />
+            <span className="text-lg font-bold bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 bg-clip-text text-transparent">
               Brainstorm
             </span>
           </Link>
@@ -220,7 +222,7 @@ export default function LandingPage() {
                 Ready to brainstorm?
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-lg text-white/80">
-                Join teams already using Brainstorm Platform to turn ideas into structured, actionable outcomes.
+                Join teams already using Sovereign Brainstorming Platform to turn ideas into structured, actionable outcomes.
               </p>
               {isLoading ? (
                 <div className="mt-8 mx-auto h-12 w-48 animate-pulse rounded-xl bg-white/20"></div>
@@ -250,14 +252,16 @@ export default function LandingPage() {
       <footer className="border-t bg-muted/30">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600">
-                <Zap className="h-4 w-4 text-white" />
-              </div>
-              <span className="font-semibold">Brainstorm Platform</span>
+            <div className="flex items-center gap-2.5">
+              <img
+                src="/logo.png"
+                alt="Brainstorm Logo"
+                className="h-9 w-9 rounded-lg shadow-md shadow-teal-500/20"
+              />
+              <span className="font-semibold">Sovereign Brainstorming Platform</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Brainstorm Platform. Built for teams that think big.
+              © {new Date().getFullYear()} Sovereign Brainstorming Platform. Built for teams that think big.
             </p>
           </div>
         </div>
@@ -265,3 +269,4 @@ export default function LandingPage() {
     </div>
   );
 }
+

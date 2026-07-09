@@ -1055,7 +1055,7 @@ const securityHeaders = [
 // app/layout.tsx
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL!),
-  title: { template: '%s | Brainstorm Platform', default: 'Brainstorm Platform' },
+  title: { template: '%s | Sovereign Brainstorming Platform', default: 'Sovereign Brainstorming Platform' },
   description: 'Collaborative real-time brainstorming with hierarchical ideas and structured voting.',
   openGraph: {
     type: 'website',
@@ -1529,7 +1529,7 @@ NEXT_PUBLIC_API_URL=http://localhost:5000/api
 NEXT_PUBLIC_WS_URL=http://localhost:5000
 
 # App
-NEXT_PUBLIC_APP_NAME="Brainstorm Platform"
+NEXT_PUBLIC_APP_NAME="Sovereign Brainstorming Platform"
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
 # Analytics (optional)
@@ -1549,3 +1549,4 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 ---
 
 *Architecture plan complete. Awaiting approval to begin code generation.*
+

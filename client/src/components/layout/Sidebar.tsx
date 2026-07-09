@@ -75,11 +75,13 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       >
         {/* Logo */}
         <div className="flex h-16 items-center justify-between px-6">
-          <Link href={ROUTES.WORKSPACES} className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/25">
-              <Zap className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-lg font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
+          <Link href={ROUTES.WORKSPACES} className="flex items-center gap-2.5 group">
+            <img
+              src="/logo.png"
+              alt="Brainstorm Logo"
+              className="h-10 w-10 rounded-xl shadow-lg shadow-teal-500/20 transition-all group-hover:shadow-teal-500/40 group-hover:scale-105"
+            />
+            <span className="text-lg font-bold bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 bg-clip-text text-transparent">
               Brainstorm
             </span>
           </Link>
