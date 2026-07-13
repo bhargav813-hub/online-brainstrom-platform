@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useRef } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { useSession, useJoinSession, useLeaveSession, useUpdateSession } from '@/features/sessions/hooks/useSession';
 import { useIdeaHierarchy, useDeleteIdea } from '@/features/ideas/hooks/useIdeas';
@@ -10,6 +10,8 @@ import { ClusterList } from '@/features/clusters/components/ClusterList';
 import { useSocket } from '@/providers/SocketProvider';
 import { IdeaNode } from '@/features/ideas/components/IdeaNode';
 import { CreateIdeaForm } from '@/features/ideas/components/CreateIdeaForm';
+import { IdeaFilterBar, type IdeaFilterState } from '@/features/ideas/components/IdeaFilterBar';
+import type { Idea } from '@/types/idea.types';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { PageLoader } from '@/components/feedback/LoadingSpinner';
 import { ErrorMessage } from '@/components/feedback/ErrorMessage';
@@ -41,6 +43,61 @@ export default function SessionPage({ params }: { params: Promise<{ workspaceId:
   const { user } = useAuthStore();
 
   const hasJoined = useRef(false);
+  const [filters, setFilters] = useState<IdeaFilterState>({ search: '', sortBy: 'none', tag: '', authorId: '' });
+
+  const getFilteredIdeas = () => {
+    if (!ideas) return [];
+    let result = JSON.parse(JSON.stringify(ideas)) as Idea[]; // Deep copy to safely mutate
+
+    const filterTree = (nodes: Idea[]): Idea[] => {
+      return nodes.filter(node => {
+        let matches = true;
+        if (filters.search) {
+          const s = filters.search.toLowerCase();
+          const nodeMatches = node.title.toLowerCase().includes(s) || (node.content && node.content.toLowerCase().includes(s));
+          matches = matches && !!nodeMatches;
+        }
+        if (filters.tag) {
+          matches = matches && !!(node.tags && node.tags.includes(filters.tag));
+        }
+        if (filters.authorId) {
+          const authorMatch = typeof node.author === 'object' && node.author?._id === filters.authorId;
+          matches = matches && !!authorMatch;
+        }
+
+        if (node.children && node.children.length > 0) {
+          node.children = filterTree(node.children);
+          if (node.children.length > 0) matches = true; // Keep parent if child matches
+        }
+        return matches;
+      });
+    };
+
+    if (filters.search || filters.tag || filters.authorId) {
+      result = filterTree(result);
+    }
+
+    const sortNodes = (nodes: Idea[]) => {
+      if (filters.sortBy === 'highest_voted') {
+        nodes.sort((a, b) => (b.upvoteCount - b.downvoteCount) - (a.upvoteCount - a.downvoteCount));
+      } else if (filters.sortBy === 'lowest_voted') {
+        nodes.sort((a, b) => (a.upvoteCount - a.downvoteCount) - (b.upvoteCount - b.downvoteCount));
+      } else if (filters.sortBy === 'newest') {
+        nodes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      }
+      nodes.forEach(node => {
+        if (node.children && node.children.length > 0) sortNodes(node.children);
+      });
+    };
+
+    if (filters.sortBy !== 'none') {
+      sortNodes(result);
+    }
+
+    return result;
+  };
+
+  const filteredIdeas = getFilteredIdeas();
 
   // Join session on mount, leave on unmount
   useEffect(() => {
@@ -150,19 +207,22 @@ export default function SessionPage({ params }: { params: Promise<{ workspaceId:
         {/* Left — Ideas */}
         <div className="lg:col-span-2 space-y-4">
           {session?.status !== 'ended' && <CreateIdeaForm sessionId={sessionId} />}
+          {ideas && ideas.length > 0 && (
+            <IdeaFilterBar ideas={ideas} onFilterChange={setFilters} />
+          )}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Lightbulb className="h-5 w-5 text-amber-500" />
-                Ideas ({ideas?.length || 0})
+                Ideas ({filteredIdeas.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {!ideas?.length ? (
-                <EmptyState icon={Lightbulb} title="No ideas yet" description="Be the first to share an idea!" />
+              {!filteredIdeas.length ? (
+                <EmptyState icon={Lightbulb} title="No ideas found" description="Try adjusting your filters or create a new idea!" />
               ) : (
                 <div role="tree" className="space-y-1">
-                  {ideas.map((idea) => (
+                  {filteredIdeas.map((idea) => (
                     <IdeaNode key={idea._id} idea={idea} sessionId={sessionId} canEdit={canManage} onDelete={(id) => deleteIdea.mutate(id)} />
                   ))}
                 </div>
@@ -182,7 +242,7 @@ export default function SessionPage({ params }: { params: Promise<{ workspaceId:
             <TabsContent value="clusters">
               <Card>
                 <CardContent className="pt-4">
-                  <ClusterList sessionId={sessionId} canManage={canManage} />
+                  <ClusterList sessionId={sessionId} canManage={canManage} ideas={ideas || []} />
                 </CardContent>
               </Card>
             </TabsContent>

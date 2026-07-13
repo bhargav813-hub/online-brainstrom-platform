@@ -4,7 +4,7 @@ const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Brainstorm Platform API',
+      title: 'Sovereign Brainstorming Platform API',
       version: '1.0.0',
       description: 'Production-ready API for the Structured Online Brainstorming Platform',
       contact: { name: 'API Support' },
@@ -440,3 +440,4 @@ const options: swaggerJsdoc.Options = {
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
+

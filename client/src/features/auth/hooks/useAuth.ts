@@ -83,7 +83,10 @@ export function useResetPassword() {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: (payload: ResetPasswordPayload) => authService.resetPassword(payload),
+    mutationFn: async (payload: ResetPasswordPayload) => {
+      await authService.verifyResetOtp({ email: payload.email, otp: payload.otp });
+      return authService.resetPassword(payload);
+    },
     onSuccess: () => {
       toast.success('Password reset successfully!');
       router.push(ROUTES.LOGIN);

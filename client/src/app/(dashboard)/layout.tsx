@@ -21,8 +21,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <Zap className="h-8 w-8 animate-pulse text-violet-600" />
+      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-background">
+        <img
+          src="/logo.png"
+          alt="Loading"
+          className="h-16 w-16 rounded-2xl shadow-lg animate-pulse"
+        />
+        <p className="text-sm font-medium bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 bg-clip-text text-transparent animate-pulse">
+          Loading your workspace…
+        </p>
       </div>
     );
   }

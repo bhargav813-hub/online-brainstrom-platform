@@ -11,10 +11,10 @@ export interface IUser extends Document {
   email: string;
   password: string;
   avatar?: string;
+  avatarPublicId?: string;
   isActive: boolean;
   isVerified: boolean;
-  otp?: string;
-  otpExpires?: Date;
+
   refreshToken?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -47,6 +47,10 @@ const userSchema = new Schema<IUser>(
       type: String,
       default: '',
     },
+    avatarPublicId: {
+      type: String,
+      default: '',
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -55,14 +59,7 @@ const userSchema = new Schema<IUser>(
       type: Boolean,
       default: false,
     },
-    otp: {
-      type: String,
-      select: false,
-    },
-    otpExpires: {
-      type: Date,
-      select: false,
-    },
+
     refreshToken: {
       type: String,
       select: false,
@@ -73,13 +70,7 @@ const userSchema = new Schema<IUser>(
   }
 );
 
-// ==================== HOOKS ====================
-/** Hash password before saving */
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 12);
-  next();
-});
+
 
 // ==================== METHODS ====================
 /** Compare candidate password with stored hash */

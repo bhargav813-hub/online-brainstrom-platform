@@ -47,7 +47,7 @@ app.use(express.urlencoded({ extended: true })); // URL-encoded form data
 app.get('/', (_req, res) => {
   res.status(200).json({
     success: true,
-    message: 'Welcome to the Brainstorm Platform API',
+    message: 'Welcome to the Sovereign Brainstorming Platform API',
     version: '1.0.0',
     endpoints: {
       health: '/api/health',
@@ -68,7 +68,7 @@ app.get('/', (_req, res) => {
 app.get('/api/health', (_req, res) => {
   res.status(200).json({
     success: true,
-    message: 'Brainstorm Platform API is running',
+    message: 'Sovereign Brainstorming Platform API is running',
     environment: env.NODE_ENV,
     timestamp: new Date().toISOString(),
   });
@@ -77,7 +77,7 @@ app.get('/api/health', (_req, res) => {
 // ==================== SWAGGER API DOCS ====================
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'Brainstorm Platform API Docs',
+  customSiteTitle: 'Sovereign Brainstorming Platform API Docs',
 }));
 app.get('/api-docs.json', (_req, res) => {
   res.setHeader('Content-Type', 'application/json');
@@ -88,7 +88,7 @@ app.get('/api-docs.json', (_req, res) => {
 app.get('/api', (_req, res) => {
   res.status(200).json({
     success: true,
-    message: 'Brainstorm Platform API',
+    message: 'Sovereign Brainstorming Platform API',
     version: '1.0.0',
     endpoints: {
       health: '/api/health',
@@ -122,3 +122,4 @@ app.use(notFoundHandler);                       // 404 catch-all
 app.use(errorHandler);                          // Global error handler
 
 export default app;
+

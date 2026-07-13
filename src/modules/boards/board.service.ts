@@ -17,7 +17,7 @@ export class BoardService {
       workspace: data.workspaceId,
       createdBy: userId,
     });
-    return board.populate('createdBy', 'name email');
+    return board.populate('createdBy', 'name email avatar');
   }
 
   /** Get all boards in a workspace with pagination and optional archive filter. */
@@ -31,7 +31,7 @@ export class BoardService {
 
     const [boards, total] = await Promise.all([
       Board.find(filter)
-        .populate('createdBy', 'name email')
+        .populate('createdBy', 'name email avatar')
         .sort({ updatedAt: -1 })
         .skip(pagination.skip)
         .limit(pagination.limit),
@@ -44,7 +44,7 @@ export class BoardService {
   /** Get a board by ID. */
   static async getById(boardId: string) {
     const board = await Board.findById(boardId)
-      .populate('createdBy', 'name email')
+      .populate('createdBy', 'name email avatar')
       .populate('workspace', 'name');
     if (!board) throw ApiError.notFound('Board not found');
     return board;
@@ -112,7 +112,7 @@ export class BoardService {
   /** Get a publicly shared board by its token. */
   static async getShared(shareToken: string) {
     const board = await Board.findOne({ shareToken, isPublic: true })
-      .populate('createdBy', 'name email')
+      .populate('createdBy', 'name email avatar')
       .populate('workspace', 'name');
     if (!board) throw ApiError.notFound('Shared board not found or private');
 
@@ -124,7 +124,7 @@ export class BoardService {
     const sessionIds = sessions.map(s => s._id);
 
     const ideas = await IdeaModel.find({ session: { $in: sessionIds }, isDeleted: false })
-      .populate('author', 'name email')
+      .populate('author', 'name email avatar')
       .sort({ depth: 1, position: 1 });
 
     return { board, sessions, ideas };
@@ -133,7 +133,7 @@ export class BoardService {
   /** Export board as PDF or JSON structure. */
   static async exportBoard(boardId: string, format: 'pdf' | 'json') {
     const board = await Board.findById(boardId)
-      .populate('createdBy', 'name email')
+      .populate('createdBy', 'name email avatar')
       .populate('workspace', 'name');
     if (!board) throw ApiError.notFound('Board not found');
 
@@ -144,7 +144,7 @@ export class BoardService {
     const sessionIds = sessions.map(s => s._id);
 
     const ideas = await IdeaModel.find({ session: { $in: sessionIds }, isDeleted: false })
-      .populate('author', 'name email')
+      .populate('author', 'name email avatar')
       .sort({ depth: 1, position: 1 });
 
     if (format === 'json') {

@@ -22,4 +22,21 @@ export const userService = {
     const { data } = await apiClient.get<ApiResponse<UserSearchResult[]>>(`/users/search?q=${encodeURIComponent(query)}`);
     return data.data;
   },
+
+  uploadAvatar: async (file: File, onUploadProgress?: (progressEvent: any) => void) => {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    const { data } = await apiClient.post<ApiResponse<User>>('/users/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress,
+    });
+    return data.data;
+  },
+
+  deleteAvatar: async () => {
+    const { data } = await apiClient.delete<ApiResponse<User>>('/users/avatar');
+    return data.data;
+  },
 };

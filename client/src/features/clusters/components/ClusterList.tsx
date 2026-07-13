@@ -6,13 +6,15 @@ import { CreateClusterModal } from './CreateClusterModal';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { LoadingSpinner } from '@/components/feedback/LoadingSpinner';
 import { Layers } from 'lucide-react';
+import type { Idea } from '@/types/idea.types';
 
 interface ClusterListProps {
   sessionId: string;
   canManage?: boolean;
+  ideas?: Idea[];
 }
 
-export function ClusterList({ sessionId, canManage }: ClusterListProps) {
+export function ClusterList({ sessionId, canManage, ideas }: ClusterListProps) {
   const { data: clusters, isLoading } = useClusters(sessionId);
   const deleteCluster = useDeleteCluster(sessionId);
 
@@ -39,6 +41,7 @@ export function ClusterList({ sessionId, canManage }: ClusterListProps) {
               cluster={cluster}
               sessionId={sessionId}
               canManage={canManage}
+              ideas={ideas || []}
               onDelete={(id) => deleteCluster.mutate(id)}
             />
           ))}

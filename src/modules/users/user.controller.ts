@@ -3,6 +3,7 @@ import { UserService } from './user.service';
 import { ApiResponse } from '../../utils/apiResponse';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { AuthRequest } from '../../types';
+import { ApiError } from '../../utils/apiError';
 
 export class UserController {
   static getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -24,5 +25,18 @@ export class UserController {
   static changePassword = asyncHandler(async (req: AuthRequest, res: Response) => {
     await UserService.changePassword(req.user!.id, req.body);
     ApiResponse.success(res, null, 'Password changed successfully');
+  });
+
+  static uploadAvatar = asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!req.file) {
+      throw new ApiError(400, 'No file uploaded');
+    }
+    const user = await UserService.uploadAvatar(req.user!.id, req.file.buffer);
+    ApiResponse.success(res, user, 'Avatar uploaded successfully');
+  });
+
+  static deleteAvatar = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const user = await UserService.deleteAvatar(req.user!.id);
+    ApiResponse.success(res, user, 'Avatar deleted successfully');
   });
 }
